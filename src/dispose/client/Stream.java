@@ -3,6 +3,7 @@ package dispose.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents a Stream, and also a node in the DAG representation of the computation.
@@ -69,9 +70,7 @@ public class Stream
    * @return            The resulting stream
    */
   public Stream apply(Op op, int windowSize) {
-    Stream child = new Stream(op, windowSize, this);
-    this.children.add(child);
-    return child;
+    return new Stream(op, windowSize, this);
   }
   
   /**
@@ -133,6 +132,27 @@ public class Stream
    */
   public int getID() {
     return this.id;
+  }
+  
+  /**
+   * Serializes the stream, in the format
+   * (id, op, windowSize, (children), (parents))
+   * 
+   */
+  public String serialize() {
+    String id = Integer.toString(getID());
+    String op = this.operation.getName();
+    String win = Integer.toString(getWindowSize());
+    
+    String childrensID = "(" + children.stream()
+                               .map(child -> Integer.toString(child.getID()))
+                               .collect(Collectors.joining(",")) + ")";
+    String parentsID = "(" + parents.stream()
+                               .map(parent -> Integer.toString(parent.getID()))
+                               .collect(Collectors.joining(",")) + ")";
+    
+    return new String("(" + String.join(";", id, op, win, parentsID, childrensID) + ")");
+    
   }
   
 }
