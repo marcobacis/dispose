@@ -23,6 +23,8 @@ public class Stream
   
   private int windowSize;
   
+  private int windowSlide;
+  
   /**
    * Enumerator class used to assign a unique id (integer)
    * to every new stream.
@@ -38,21 +40,23 @@ public class Stream
   }
   
   /**
-   * Dummy constructor
+   * Dummy constructor, initializes default parameters
    */
   public Stream() {
     this.id = StreamEnumerator.getNewID();
     this.operation = Op.NONE;
     this.windowSize = 1;
+    this.windowSlide = 1;
   }
   
   /**
-   * @param op      Operator to use on the data passing trough the node
-   * @param winSize Size of the window for the operation
-   * @param parents Previous streams from which this one is derived
+   * Stream constructor
+   * @param op          Operator to use on the data passing trough the node
+   * @param winSize     Size of the window for the operation
+   * @param parents     Previous streams from which this one is derived
    */
   public Stream(Op op, int winSize, Stream ...parents) {
-    this.id = StreamEnumerator.getNewID();
+    this();
     this.parents = Arrays.asList(parents);
     this.operation = op;
     this.windowSize = winSize;
@@ -61,6 +65,18 @@ public class Stream
       p.addChild(this);
     }
     
+  }
+  
+  /**
+   * Stream constructor
+   * @param op          Operator to use on the data passing trough the node
+   * @param winSize     Size of the window for the operation
+   * @param winSlide    Sliding factor of the operator's window
+   * @param parents     Previous streams from which this one is derived
+   */
+  public Stream(Op op, int winSize, int winSlide, Stream ...parents) {
+    this(op, winSize, parents);
+    this.windowSlide = winSlide;    
   }
 
   /**
@@ -71,6 +87,17 @@ public class Stream
    */
   public Stream apply(Op op, int windowSize) {
     return new Stream(op, windowSize, this);
+  }
+  
+  /**
+   * Applies an operation to the stream, creating a new stream
+   * @param op          Operator applied to the stream
+   * @param windowSize  Size of the operator window
+   * @param windowSlide Size of the operator window's sliding factor
+   * @return            The resulting stream
+   */
+  public Stream apply(Op op, int windowSize, int windowSlide) {
+    return new Stream(op, windowSize, windowSlide, this);
   }
   
   /**
@@ -111,6 +138,13 @@ public class Stream
   }
   
   /**
+   * Returns the current operation window's sliding factor
+   */
+  public int getWindowSlide() {
+    return this.windowSlide;
+  }
+  
+  /**
    * Returns the operation applied on this stream
    */
   public Op getOperation() {
@@ -143,6 +177,7 @@ public class Stream
     String id = Integer.toString(getID());
     String op = this.operation.getName();
     String win = Integer.toString(getWindowSize());
+    String slide = Integer.toString(getWindowSlide());
     
     String childrensID = "(" + children.stream()
                                .map(child -> Integer.toString(child.getID()))
@@ -151,7 +186,7 @@ public class Stream
                                .map(parent -> Integer.toString(parent.getID()))
                                .collect(Collectors.joining(",")) + ")";
     
-    return new String("(" + String.join(";", id, op, win, parentsID, childrensID) + ")");
+    return new String("(" + String.join(";", id, op, win, slide, parentsID, childrensID) + ")");
     
   }
   
