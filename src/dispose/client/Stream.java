@@ -1,5 +1,6 @@
 package dispose.client;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,19 +12,20 @@ import java.util.stream.Collectors;
  * a time have a window of size 1).
  */
 
-public class Stream
+public class Stream implements Serializable
 {
   
-  private List<Stream> parents = new ArrayList<Stream>();
-  private List<Stream> children = new ArrayList<Stream>();
+  private static final long serialVersionUID = -8565637299384034533L;
+  protected List<Stream> parents = new ArrayList<Stream>();
+  protected List<Stream> children = new ArrayList<Stream>();
   
-  private Op operation;
+  protected Op operation;
   
-  private int id;
+  protected int id;
   
-  private int windowSize;
+  protected int windowSize;
   
-  private int windowSlide;
+  protected int windowSlide;
   
   /**
    * Enumerator class used to assign a unique id (integer)
@@ -173,7 +175,8 @@ public class Stream
    * (id, op, windowSize, (children), (parents))
    * 
    */
-  public String serialize() {
+  @Override
+  public String toString() {
     String id = Integer.toString(getID());
     String op = this.operation.getName();
     String win = Integer.toString(getWindowSize());
