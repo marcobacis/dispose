@@ -24,6 +24,9 @@ public abstract class WindowOperator implements Operator
   private State state;
   
   public WindowOperator(int size, int slide) {
+    
+    assert(size >= 1 && slide >= 1);
+    
     this.clock = 0;
     this.size = size;
     this.slide = slide;
