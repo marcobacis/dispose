@@ -1,10 +1,7 @@
 
 package dispose.test;
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
@@ -13,8 +10,6 @@ import dispose.net.common.DataAtom;
 import dispose.net.common.types.FloatData;
 import dispose.net.common.types.NullData;
 import dispose.net.node.operators.MaxWindowOperator;
-import dispose.net.node.operators.WindowOperator;
-
 
 public class WindowOperatorTest
 {
