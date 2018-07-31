@@ -1,6 +1,0 @@
-package dispose.net.node;
-
-public interface PipeOutput
-{
-
-}
