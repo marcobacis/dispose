@@ -102,9 +102,11 @@ public class OperatorThread extends Thread
           }
         }
       } catch(ClassNotFoundException e){
-        System.out.println("fuck");
+        System.out.println("Received object class not found! " + e.getMessage());
+        e.printStackTrace();
       } catch (IOException e) {
-        System.out.println("fuckk");
+        System.out.println("IOException: " +e.getMessage());
+        e.printStackTrace();
       }
 
     }

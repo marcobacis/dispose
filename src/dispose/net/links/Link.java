@@ -16,4 +16,9 @@ public interface Link
    * @throws IOException
    */
   public OutputStream getOutputStream() throws IOException;
+  
+  /**
+   * Closes the link
+   */
+  public void close();
 }

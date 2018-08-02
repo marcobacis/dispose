@@ -26,7 +26,7 @@ public class PipeLink implements Link
     this.inPipe = new PipedInputStream();
     
     this.inPipe.connect(outPipe);
-    
+        
     this.outStream = new ObjectOutputStream(this.outPipe);
     this.inStream = new ObjectInputStream(this.inPipe);
   }
@@ -43,6 +43,21 @@ public class PipeLink implements Link
   public OutputStream getOutputStream() throws IOException
   {
     return this.outStream;
+  }
+
+
+  @Override
+  public void close()
+  {
+    try{
+      this.inStream.close();
+      this.outStream.close();
+      this.inPipe.close();
+      this.outPipe.close();
+    } catch(IOException e) {
+      //does nothing
+      return;
+    }
   }
 
 }
