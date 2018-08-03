@@ -8,9 +8,9 @@ import dispose.net.common.types.FloatData;
 public class AvgWindowOperator extends WindowOperator
 {
 
-  public AvgWindowOperator(int size, int slide)
+  public AvgWindowOperator(int id, int size, int slide)
   {
-    super(size, slide);
+    super(id, size, slide);
   }
 
 

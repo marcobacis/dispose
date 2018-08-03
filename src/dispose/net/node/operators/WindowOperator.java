@@ -1,5 +1,6 @@
 package dispose.net.node.operators;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import dispose.net.common.DataAtom;
@@ -7,12 +8,14 @@ import dispose.net.common.TypeSet;
 import dispose.net.common.types.NullData;
 import dispose.net.node.Operator;
 
-public abstract class WindowOperator implements Operator
+public abstract class WindowOperator implements Operator, Serializable
 {
   
+  private static final long serialVersionUID = -7926914522640629497L;
   private int clock;
   private int size;
   private int slide;
+  private int id; 
   
   protected ArrayList<DataAtom> window;
   private int currSlide = 0;
@@ -23,15 +26,22 @@ public abstract class WindowOperator implements Operator
   
   private State state;
   
-  public WindowOperator(int size, int slide) {
+  public WindowOperator(int id, int size, int slide) {
     
     assert(size >= 1 && slide >= 1);
     
+    this.id = id;
     this.clock = 0;
     this.size = size;
     this.slide = slide;
     this.window = new ArrayList<DataAtom>();
     this.state = State.FILL;
+  }
+  
+  @Override
+  public int getID()
+  {
+    return this.id;
   }
 
   @Override

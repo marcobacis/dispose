@@ -39,6 +39,8 @@ public class SocketLink implements Link
 
     Socket sock = new Socket(host, port);
 
+    System.out.println("Connected at " + host + " port " + port);
+    
     return new SocketLink(sock);
   }
   
@@ -49,9 +51,13 @@ public class SocketLink implements Link
    * @throws IOException
    */
   public static SocketLink connectFrom(int port) throws IOException {
+    
+    System.out.println("Waiting on port " + port);
     ServerSocket server = new ServerSocket(port);
     
     Socket sock = server.accept();
+    
+    System.out.println("Accepted on port " + port);
     
     server.close();
     
@@ -69,6 +75,20 @@ public class SocketLink implements Link
   public OutputStream getOutputStream() throws IOException
   {
     return this.outStream;
+  }
+  
+  @Override
+  public void sendMsg(Object message) throws IOException
+  {
+    this.outStream.writeObject(message);
+    this.outStream.flush();
+  }
+
+
+  @Override
+  public Object recvMsg() throws IOException, ClassNotFoundException
+  {
+    return this.inStream.readObject();
   }
 
   @Override

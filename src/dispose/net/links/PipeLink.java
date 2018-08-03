@@ -45,7 +45,20 @@ public class PipeLink implements Link
     return this.outStream;
   }
 
+  @Override
+  public void sendMsg(Object message) throws IOException
+  {
+    this.outStream.writeObject(message);
+    this.outStream.flush();
+  }
 
+
+  @Override
+  public Object recvMsg() throws IOException, ClassNotFoundException
+  {
+    return this.inStream.readObject();
+  }
+  
   @Override
   public void close()
   {
@@ -59,5 +72,5 @@ public class PipeLink implements Link
       return;
     }
   }
-
+  
 }

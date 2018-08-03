@@ -19,6 +19,8 @@ public class OperatorThread extends Thread
 {
 
   private Operator operator;
+  
+  private int opID;
 
   private ObjectInputStream inStream;
   private List<ObjectOutputStream> outStreams;
@@ -32,6 +34,7 @@ public class OperatorThread extends Thread
   public OperatorThread(Operator operator)
   {
     this.operator = operator;
+    this.opID = operator.getID();
     this.outStreams = new ArrayList<>();
   }
 
@@ -77,7 +80,14 @@ public class OperatorThread extends Thread
     this.running.set(false);
   }
 
-
+  /**
+   * Returns the operator's id in the job's dag
+   * @return the operator id
+   */
+  public int getID() {
+    return this.opID;
+  }
+  
   /**
    * Main loop of the thread. Gets the control commands
    * and runs the operator on each new data on the input link.
@@ -101,9 +111,13 @@ public class OperatorThread extends Thread
             out.flush();
           }
         }
+        
       } catch(ClassNotFoundException e){
         System.out.println("Received object class not found! " + e.getMessage());
         e.printStackTrace();
+      } catch(EOFException e) {
+        System.out.println("Link EOF encountered: " + e.getMessage());
+        return;
       } catch (IOException e) {
         System.out.println("IOException: " +e.getMessage());
         e.printStackTrace();

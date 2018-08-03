@@ -8,6 +8,13 @@ import dispose.net.common.TypeSet;
  */
 public interface Operator
 {
+  
+  /**
+   * Returns the operator id as in the job DAG
+   * @return the operator's id
+   */
+  public int getID();
+  
   /**
    * @return The clock of this object.
    */

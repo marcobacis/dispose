@@ -33,7 +33,7 @@ public class WindowOperatorTest
   @Test
   public void testIsFull()
   {
-    MaxWindowOperator op = new MaxWindowOperator(5, 1);
+    MaxWindowOperator op = new MaxWindowOperator(1, 5, 1);
     assert(!op.isFull());
     op.processAtom(new FloatData(0));
     assert(!op.isFull());
@@ -55,7 +55,7 @@ public class WindowOperatorTest
   @Test
   public void testIsEmpty()
   {
-    MaxWindowOperator op = new MaxWindowOperator(5, 1);
+    MaxWindowOperator op = new MaxWindowOperator(1, 5, 1);
     assert(op.isEmpty());
     
     op.processAtom(new NullData());
@@ -78,7 +78,7 @@ public class WindowOperatorTest
   @Test
   public void testReset()
   {
-    MaxWindowOperator op = new MaxWindowOperator(5, 1);
+    MaxWindowOperator op = new MaxWindowOperator(1, 5, 1);
     
     assert(op.isEmpty());
     
@@ -114,7 +114,7 @@ public class WindowOperatorTest
     List<DataAtom> result = new ArrayList<>();
     List<DataAtom> trusted = new ArrayList<>();
 
-    MaxWindowOperator op = new MaxWindowOperator(size, slide);
+    MaxWindowOperator op = new MaxWindowOperator(1, size, slide);
 
     for (DataAtom a : atoms) {
       result.add(op.processAtom(a));

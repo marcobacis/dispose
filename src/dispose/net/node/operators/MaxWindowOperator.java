@@ -8,9 +8,9 @@ import dispose.net.common.types.FloatData;
 public class MaxWindowOperator extends WindowOperator
 {
 
-  public MaxWindowOperator(int size, int slide)
+  public MaxWindowOperator(int id, int size, int slide)
   {
-    super(size, slide);
+    super(id, size, slide);
   }
 
 

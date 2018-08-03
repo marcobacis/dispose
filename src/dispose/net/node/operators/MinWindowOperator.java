@@ -8,9 +8,9 @@ import dispose.net.common.types.FloatData;
 public class MinWindowOperator extends WindowOperator
 {
 
-  public MinWindowOperator(int size, int slide)
+  public MinWindowOperator(int id, int size, int slide)
   {
-    super(size, slide);
+    super(id, size, slide);
   }
 
 

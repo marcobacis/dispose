@@ -9,7 +9,6 @@ public class NullOperator implements Operator
 {
   int clock = 0;
   
-  
   @Override
   public int clock()
   {
@@ -36,6 +35,13 @@ public class NullOperator implements Operator
   public Class<DataAtom> outputRestriction(Class<DataAtom> intype)
   {
     return intype;
+  }
+
+
+  @Override
+  public int getID()
+  {
+    return 0;
   }
 
 }

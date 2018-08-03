@@ -1,4 +1,4 @@
-package dispose.net.common;
+package dispose.net.message;
 
 import java.io.Serializable;
 

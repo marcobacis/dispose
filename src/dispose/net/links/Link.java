@@ -17,6 +17,11 @@ public interface Link
    */
   public OutputStream getOutputStream() throws IOException;
   
+  
+  public void sendMsg(Object message) throws IOException;
+  
+  public Object recvMsg() throws IOException, ClassNotFoundException;
+  
   /**
    * Closes the link
    */

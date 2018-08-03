@@ -8,9 +8,9 @@ import dispose.net.common.types.FloatData;
 public class SumWindowOperator extends WindowOperator
 {
 
-  public SumWindowOperator(int size, int slide)
+  public SumWindowOperator(int id, int size, int slide)
   {
-    super(size, slide);
+    super(id, size, slide);
   }
 
 
