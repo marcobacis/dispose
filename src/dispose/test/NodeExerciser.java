@@ -6,11 +6,13 @@ import java.util.concurrent.TimeUnit;
 
 import dispose.net.common.Config;
 import dispose.net.common.types.FloatData;
+import dispose.net.links.PipeLink;
 import dispose.net.links.SocketLink;
 import dispose.net.message.ConnectOperatorMsg;
 import dispose.net.message.ConnectRemoteOperatorMsg;
 import dispose.net.message.DeployOperatorMsg;
 import dispose.net.message.StartOperatorMsg;
+import dispose.net.node.Node;
 import dispose.net.node.Operator;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.MaxWindowOperator;
@@ -20,7 +22,11 @@ public class NodeExerciser
 {
   public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException
   {
-    SocketLink ctrl = SocketLink.connectFrom(Config.nodeCtrlPort);
+    //SocketLink ctrl = SocketLink.connectFrom(Config.nodeCtrlPort);
+    PipeLink ctrl = new PipeLink();
+    Node node = new Node(ctrl);
+    Thread nthd = new Thread(node);
+    nthd.start();
     
     // here -> max(3,1) -> avg(1,1) -> here
     
