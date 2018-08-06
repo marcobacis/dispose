@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import dispose.net.links.Link;
 import dispose.net.links.SocketLink;
+import dispose.net.message.LogMsg;
 
 public class NodeMonitor implements Runnable
 {
@@ -32,15 +33,16 @@ public class NodeMonitor implements Runnable
   @Override
   public void run()
   {
-    while (true) {
-      try {
+    try {
+      link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
+      while (true) {
         link.recvMsg(0);
-      } catch (ClassNotFoundException | IOException e) {
-        System.out.println("Node ID " + Integer.toHexString(nodeID()) + " down");
-        e.printStackTrace();
-        break;
       }
+    } catch (ClassNotFoundException | IOException e) {
+      System.out.println("Node ID " + Integer.toHexString(nodeID()) + " down");
+      e.printStackTrace();
     }
+    
     owner.removeNode(this);
   }
 
