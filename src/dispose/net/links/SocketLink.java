@@ -77,20 +77,36 @@ public class SocketLink implements Link
     return this.outStream;
   }
   
+  
   @Override
   public void sendMsg(Object message) throws IOException
   {
     this.outStream.writeObject(message);
     this.outStream.flush();
   }
+  
+  
+  @Override
+  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  {
+    Object res;
+    this.sock.setSoTimeout(timeoutms);
+    try {
+      res = this.inStream.readObject();
+    } catch (SocketTimeoutException e) {
+      res = null;
+    }
+    return res;
+  }
 
 
   @Override
   public Object recvMsg() throws IOException, ClassNotFoundException
   {
-    return this.inStream.readObject();
+    return recvMsg(0);
   }
 
+  
   @Override
   public void close()
   {

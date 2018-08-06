@@ -22,6 +22,8 @@ public interface Link
   
   public Object recvMsg() throws IOException, ClassNotFoundException;
   
+  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException;
+  
   /**
    * Closes the link
    */

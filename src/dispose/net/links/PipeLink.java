@@ -14,12 +14,12 @@ import java.io.PipedOutputStream;
  */
 public class PipeLink implements Link
 {
-
   private PipedInputStream inPipe;
   private PipedOutputStream outPipe;
   
   private ObjectInputStream inStream;
   private ObjectOutputStream outStream;
+  
   
   public PipeLink() throws IOException{
     this.outPipe = new PipedOutputStream();
@@ -45,6 +45,7 @@ public class PipeLink implements Link
     return this.outStream;
   }
 
+  
   @Override
   public void sendMsg(Object message) throws IOException
   {
@@ -59,6 +60,14 @@ public class PipeLink implements Link
     return this.inStream.readObject();
   }
   
+  
+  @Override
+  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  {
+    return recvMsg();
+  }
+  
+  
   @Override
   public void close()
   {
@@ -72,5 +81,4 @@ public class PipeLink implements Link
       return;
     }
   }
-  
 }
