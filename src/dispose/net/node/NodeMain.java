@@ -24,10 +24,16 @@ public class NodeMain
   //TODO handle errors on the supervisor link (and on the creation of operator links)
   public static void main(String[] args) throws IOException, ClassNotFoundException
   {
-
     Map<Integer, OperatorThread> operators = new HashMap<>();
     
-    SocketLink ctrl = SocketLink.connectFrom(Config.nodeCtrlPort);
+    String host;
+    if (args.length < 1) {
+      System.out.println("usage: java dispose.net.node [supervisor-ip]");
+      host = "127.0.0.1";
+    } else {
+      host = args[0];
+    }
+    SocketLink ctrl = SocketLink.connectTo(host, Config.nodeCtrlPort);
 
     do {
       CtrlMessage msg = (CtrlMessage) ctrl.recvMsg();
