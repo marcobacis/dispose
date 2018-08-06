@@ -2,9 +2,7 @@ package dispose.net.message;
 
 import java.io.Serializable;
 
-public class CtrlMessage implements Serializable
+public interface CtrlMessage extends Serializable
 {
-
-  /* TODO Actually implement this class! */
-
+  
 }

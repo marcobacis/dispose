@@ -1,6 +1,6 @@
 package dispose.net.message;
 
-public class ConnectOperatorMsg extends CtrlMessage
+public class ConnectOperatorMsg implements CtrlMessage
 {
 
   private static final long serialVersionUID = 2787870806083718206L;

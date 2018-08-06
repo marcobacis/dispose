@@ -2,7 +2,7 @@ package dispose.net.message;
 
 import dispose.net.node.Operator;
 
-public class DeployOperatorMsg extends CtrlMessage
+public class DeployOperatorMsg implements CtrlMessage
 {
 
   private static final long serialVersionUID = 8391051064976656835L;
