@@ -1,17 +1,11 @@
 package dispose.net.node;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import dispose.net.links.Link;
-import dispose.net.links.PipeLink;
-import dispose.net.links.SocketLink;
-import dispose.net.message.ConnectOperatorMsg;
-import dispose.net.message.ConnectRemoteOperatorMsg;
 import dispose.net.message.CtrlMessage;
-import dispose.net.message.DeployOperatorMsg;
-import dispose.net.message.StartOperatorMsg;
 
 
 public class Node implements Runnable
@@ -33,73 +27,43 @@ public class Node implements Runnable
   {
     try {
       eventLoop();
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
   
   
   //TODO handle errors on the supervisor link (and on the creation of operator links)
-  private void eventLoop() throws IOException
+  private void eventLoop() throws Exception
   {
     do {
-      CtrlMessage msg;
-      try {
-        msg = (CtrlMessage) ctrlLink.recvMsg();
-      } catch (ClassNotFoundException | IOException e1) {
-        e1.printStackTrace();
-        return;
-      }
-
-      //control messages parser
-      //TODO move this into the messages classes?
-      
-      //Create an operator + thread
-      if (msg instanceof DeployOperatorMsg) {
-        DeployOperatorMsg castmsg = (DeployOperatorMsg) msg;
-        operators.put(castmsg.getOperator().getID(), new OperatorThread(castmsg.getOperator()));
-        
-      }
-      
-      //Connect two local operators
-      else if (msg instanceof ConnectOperatorMsg) {
-        ConnectOperatorMsg castmsg = (ConnectOperatorMsg) msg;
-        Link pipeLink = new PipeLink();
-        
-        operators.get(castmsg.getFrom()).addOutput(pipeLink);
-        operators.get(castmsg.getTo()).addInput(pipeLink);
-        
-      }
-      
-      //Connect to/from remote operator
-      else if (msg instanceof ConnectRemoteOperatorMsg) {
-        ConnectRemoteOperatorMsg castmsg = (ConnectRemoteOperatorMsg) msg;
-                
-        if(operators.containsKey(castmsg.getFrom())) {
-          SocketLink link = SocketLink.connectTo(castmsg.getRemoteHost(), castmsg.port());
-          operators.get(castmsg.getFrom()).addOutput(link);
-        } else {
-          SocketLink link = SocketLink.connectFrom(castmsg.port());
-          operators.get(castmsg.getTo()).addInput(link);
-        }
-        
-      }
-      
-      //Start operator thread
-      else if (msg instanceof StartOperatorMsg) {
-        StartOperatorMsg castmsg = (StartOperatorMsg) msg;
-        
-        if(castmsg.all()) {
-          for(Map.Entry<Integer, OperatorThread> e : operators.entrySet()) {
-            e.getValue().start();
-          }
-        } else {
-          operators.get(castmsg.id()).start();
-        }
-      }
-      
-
+      CtrlMessage msg = (CtrlMessage) ctrlLink.recvMsg();
+      msg.executeOnNode(this);
     } while (running);
   }
-
+  
+  
+  /** Returns the operator with the specified ID or null if that operator is
+   * not materialized on this node.
+   * @param opid The ID of the operator.
+   * @return An operator or null. */
+  synchronized public OperatorThread getOperator(int opid)
+  {
+    return operators.get(opid);
+  }
+  
+  
+  /** Add an instantiated operator to the local directory of operators.
+   * @param opid The ID of the operator.
+   * @param opthd The materialized operator. */
+  synchronized public void addOperator(int opid, OperatorThread opthd)
+  {
+    operators.put(opid, opthd);
+  }
+  
+  
+  synchronized public Set<Integer> getCurrentlyInstantiatedOperators()
+  {
+    return operators.keySet();
+  }
 }
