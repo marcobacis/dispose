@@ -3,19 +3,23 @@ package dispose.net.supervisor;
 import java.io.IOException;
 
 import dispose.net.links.Link;
+import dispose.net.links.MonitoredLink;
 import dispose.net.links.SocketLink;
+import dispose.net.message.CtrlMessage;
 import dispose.net.message.LogMsg;
 
-public class NodeMonitor implements Runnable
+public class NodeMonitor implements MonitoredLink.Delegate
 {
-  Supervisor owner;
-  Link link;
+  private Supervisor owner;
+  private MonitoredLink link;
   
   
-  public NodeMonitor(Supervisor owner, Link link)
+  public NodeMonitor(Supervisor owner, Link link) throws IOException
   {
     this.owner = owner;
-    this.link = link;
+    MonitoredLink mlink = new MonitoredLink(link, this);
+    mlink.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
+    this.link = mlink;
   }
   
   
@@ -23,32 +27,35 @@ public class NodeMonitor implements Runnable
   {
     SocketLink tlink = SocketLink.connectFrom(port);
     NodeMonitor nm = new NodeMonitor(owner, tlink);
-    Thread thd = new Thread(nm);
-    thd.setName("node-monitor-" + Integer.toHexString(nm.nodeID()));
-    thd.start();
     return nm;
-  }
-  
-  
-  @Override
-  public void run()
-  {
-    try {
-      link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
-      while (true) {
-        link.recvMsg(0);
-      }
-    } catch (ClassNotFoundException | IOException e) {
-      System.out.println("Node ID " + Integer.toHexString(nodeID()) + " down");
-      e.printStackTrace();
-    }
-    
-    owner.removeNode(this);
   }
 
   
   public int nodeID()
   {
     return this.hashCode();
+  }
+
+
+  @Override
+  public void messageReceived(CtrlMessage msg)
+  {
+    System.out.println("message received");
+    return;
+  }
+
+
+  @Override
+  public void linkIsBroken(Exception e)
+  {
+    e.printStackTrace();
+    owner.removeNode(this);
+    link = null;
+  }
+  
+  
+  public MonitoredLink getLink()
+  {
+    return link;
   }
 }
