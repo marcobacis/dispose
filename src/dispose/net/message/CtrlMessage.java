@@ -3,7 +3,7 @@ package dispose.net.message;
 import java.util.UUID;
 
 import dispose.net.node.Node;
-import dispose.net.supervisor.NodeMonitor;
+import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 
 public class CtrlMessage extends Message
@@ -26,7 +26,7 @@ public class CtrlMessage extends Message
    * supervisor.
    * @param node The supervisor who received the message. 
    * @throws Exception Causes the failure of the supervisor. */
-  public void executeOnSupervisor(Supervisor supervis, NodeMonitor nodem) throws Exception
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
   {
     throw new Exception("message " + this.getClass().toString() + " not to be sent to a supervisor");
   }

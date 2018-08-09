@@ -8,7 +8,7 @@ import dispose.net.common.Config;
 
 public class Supervisor implements Runnable
 {
-  private Set<NodeMonitor> nodes;
+  private Set<NodeProxy> nodes;
   
   
   public Supervisor()
@@ -21,7 +21,7 @@ public class Supervisor implements Runnable
   {
     while (true) {
       try {
-        NodeMonitor nm = NodeMonitor.connectNodeMonitor(this, Config.nodeCtrlPort);
+        NodeProxy nm = NodeProxy.connectNodeMonitor(this, Config.nodeCtrlPort);
         registerNode(nm);
       } catch (IOException e) {
         e.printStackTrace();
@@ -31,13 +31,13 @@ public class Supervisor implements Runnable
   }
   
   
-  synchronized protected void registerNode(NodeMonitor nm)
+  synchronized protected void registerNode(NodeProxy nm)
   {
     nodes.add(nm);
   }
   
   
-  synchronized protected void removeNode(NodeMonitor nm)
+  synchronized protected void removeNode(NodeProxy nm)
   {
     nodes.remove(nm);
   }
