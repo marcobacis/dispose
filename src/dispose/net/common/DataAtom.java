@@ -1,8 +1,30 @@
 package dispose.net.common;
 
-import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
-public abstract class DataAtom implements Serializable
+import dispose.net.message.Message;
+
+public abstract class DataAtom extends Message
 {
-
+  private static final long serialVersionUID = -7832345233584092879L;
+  private long timestamp = last_timestamp++;
+  private static long last_timestamp = 0;
+  
+  
+  public long getTimestamp()
+  {
+    return timestamp;
+  }
+  
+  
+  public UUID getUUID()
+  {
+    byte[] classn = this.getClass().getName().getBytes(StandardCharsets.UTF_8);
+    ByteBuffer bytes = ByteBuffer.allocate(Long.BYTES + classn.length);
+    bytes.put(classn, 0, classn.length);
+    bytes.putLong(classn.length, timestamp);
+    return UUID.nameUUIDFromBytes(bytes.array());
+  }
 }

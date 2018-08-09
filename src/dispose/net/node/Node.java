@@ -7,6 +7,7 @@ import java.util.Set;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
+import dispose.net.message.Message;
 
 
 public class Node implements Runnable, MonitoredLink.Delegate
@@ -30,10 +31,11 @@ public class Node implements Runnable, MonitoredLink.Delegate
   
   
   @Override
-  public void messageReceived(CtrlMessage msg) throws Exception
+  public void messageReceived(Message msg) throws Exception
   {
     //TODO handle errors on the supervisor link (and on the creation of operator links)
-    msg.executeOnNode(this);
+    CtrlMessage cmsg = (CtrlMessage)msg;
+    cmsg.executeOnNode(this);
   }
   
   

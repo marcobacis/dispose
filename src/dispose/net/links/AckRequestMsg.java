@@ -1,21 +1,30 @@
 package dispose.net.links;
 
-import dispose.net.message.CtrlMessage;
+import java.util.UUID;
 
-class AckRequestMsg extends CtrlMessage
+import dispose.net.message.Message;
+
+class AckRequestMsg extends Message
 {
   private static final long serialVersionUID = -7459338247048033324L;
-  CtrlMessage wrappedMsg;
+  Message wrappedMsg;
   
   
-  AckRequestMsg(CtrlMessage wrappedMsg)
+  AckRequestMsg(Message wrappedMsg)
   {
     this.wrappedMsg = wrappedMsg;
   }
   
   
-  CtrlMessage getMessage()
+  Message getMessage()
   {
     return wrappedMsg;
+  }
+  
+  
+  @Override
+  public UUID getUUID()
+  {
+    return wrappedMsg.getUUID();
   }
 }

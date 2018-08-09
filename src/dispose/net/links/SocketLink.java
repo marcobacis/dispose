@@ -3,6 +3,8 @@ package dispose.net.links;
 import java.io.*;
 import java.net.*;
 
+import dispose.net.message.Message;
+
 
 /**
  * Link implemented using sockets and object streams,
@@ -79,7 +81,7 @@ public class SocketLink implements Link
   
   
   @Override
-  public void sendMsg(Object message) throws IOException
+  public void sendMsg(Message message) throws IOException
   {
     this.outStream.writeObject(message);
     this.outStream.flush();
@@ -87,12 +89,12 @@ public class SocketLink implements Link
   
   
   @Override
-  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  public Message recvMsg(int timeoutms) throws IOException, ClassNotFoundException
   {
-    Object res;
+    Message res;
     this.sock.setSoTimeout(timeoutms);
     try {
-      res = this.inStream.readObject();
+      res = (Message)this.inStream.readObject();
     } catch (SocketTimeoutException e) {
       res = null;
     }
@@ -101,7 +103,7 @@ public class SocketLink implements Link
 
 
   @Override
-  public Object recvMsg() throws IOException, ClassNotFoundException
+  public Message recvMsg() throws IOException, ClassNotFoundException
   {
     return recvMsg(0);
   }

@@ -2,6 +2,8 @@ package dispose.net.links;
 
 import java.io.*;
 
+import dispose.net.message.Message;
+
 public interface Link
 {
   
@@ -18,11 +20,11 @@ public interface Link
   public OutputStream getOutputStream() throws IOException;
   
   
-  public void sendMsg(Object message) throws IOException;
+  public void sendMsg(Message message) throws IOException;
   
-  public Object recvMsg() throws IOException, ClassNotFoundException;
+  public Message recvMsg() throws IOException, ClassNotFoundException;
   
-  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException;
+  public Message recvMsg(int timeoutms) throws IOException, ClassNotFoundException;
   
   /**
    * Closes the link

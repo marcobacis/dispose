@@ -60,7 +60,8 @@ public class NodeExerciser
     to.getOutputStream().flush();
     
     while(true) {
-      System.out.println((FloatData) from.recvMsg());
+      FloatData fd = (FloatData)from.recvMsg();
+      System.out.println(fd + "; " + fd.getTimestamp() + "; " + fd.getUUID());
     }
   }
 }

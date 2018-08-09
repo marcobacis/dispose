@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import dispose.net.message.CtrlMessage;
+import dispose.net.message.Message;
 
 public class MonitoredLink
 {
@@ -18,7 +18,7 @@ public class MonitoredLink
   
   public interface Delegate
   {
-    public void messageReceived(CtrlMessage msg) throws Exception;
+    public void messageReceived(Message msg) throws Exception;
     public void linkIsBroken(Exception e);
   }
   
@@ -51,10 +51,10 @@ public class MonitoredLink
   {
     try {
       while (true) {
-        CtrlMessage m = (CtrlMessage)link.recvMsg(0);
+        Message m = link.recvMsg(0);
         
         if (m instanceof AckRequestMsg) {
-          CtrlMessage realm = ((AckRequestMsg) m).getMessage();
+          Message realm = ((AckRequestMsg) m).getMessage();
           delegate.messageReceived(realm);
           sendMsg(new AckMsg(realm.getUUID()));
           
@@ -84,13 +84,13 @@ public class MonitoredLink
   }
   
   
-  public void sendMsg(CtrlMessage message) throws IOException
+  public void sendMsg(Message message) throws IOException
   {
     link.sendMsg(message);
   }
   
   
-  public synchronized void sendMsgAndRequestAck(CtrlMessage message) throws IOException
+  public synchronized void sendMsgAndRequestAck(Message message) throws IOException
   {
     AckRequestMsg ackmsg = new AckRequestMsg(message);
     ackStatus.put(message.getUUID(), false);
@@ -98,7 +98,7 @@ public class MonitoredLink
   }
   
   
-  public synchronized void waitAck(CtrlMessage sentMessage) throws Exception
+  public synchronized void waitAck(Message sentMessage) throws Exception
   {
     UUID waituuid = sentMessage.getUUID();
     if (waituuid == null)

@@ -7,6 +7,7 @@ import dispose.net.links.MonitoredLink;
 import dispose.net.links.SocketLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.LogMsg;
+import dispose.net.message.Message;
 
 public class NodeMonitor implements MonitoredLink.Delegate
 {
@@ -37,7 +38,7 @@ public class NodeMonitor implements MonitoredLink.Delegate
 
 
   @Override
-  public void messageReceived(CtrlMessage msg)
+  public void messageReceived(Message msg) throws Exception
   {
     System.out.println("message received");
     return;

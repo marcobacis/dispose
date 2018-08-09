@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
+import dispose.net.message.Message;
+
 /**
  * Link implemented using a local pipe, for communication
  * between same-node threads
@@ -47,7 +49,7 @@ public class PipeLink implements Link
 
   
   @Override
-  public void sendMsg(Object message) throws IOException
+  public void sendMsg(Message message) throws IOException
   {
     this.outStream.writeObject(message);
     this.outStream.flush();
@@ -55,14 +57,14 @@ public class PipeLink implements Link
 
 
   @Override
-  public Object recvMsg() throws IOException, ClassNotFoundException
+  public Message recvMsg() throws IOException, ClassNotFoundException
   {
-    return this.inStream.readObject();
+    return (Message) this.inStream.readObject();
   }
   
   
   @Override
-  public Object recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  public Message recvMsg(int timeoutms) throws IOException, ClassNotFoundException
   {
     return recvMsg();
   }

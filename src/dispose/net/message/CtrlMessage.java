@@ -1,17 +1,17 @@
 package dispose.net.message;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 import dispose.net.node.Node;
+import dispose.net.supervisor.NodeMonitor;
 import dispose.net.supervisor.Supervisor;
 
-@SuppressWarnings("serial")
-public class CtrlMessage implements Serializable
-{
+public class CtrlMessage extends Message
+{  
+  private static final long serialVersionUID = -8482474289179576562L;
   private UUID uuid = UUID.randomUUID();
-  
-  
+
+
   /** Performs the action associated with the control message on the specified
    * node.
    * @param node The node who received the message. 
