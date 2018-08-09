@@ -17,9 +17,8 @@ public class NodeMonitor implements MonitoredLink.Delegate
   public NodeMonitor(Supervisor owner, Link link) throws IOException
   {
     this.owner = owner;
-    MonitoredLink mlink = new MonitoredLink(link, this);
-    mlink.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
-    this.link = mlink;
+    this.link = MonitoredLink.asyncMonitorLink(link, this);
+    this.link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
   }
   
   

@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.Set;
 
 import dispose.net.links.Link;
+import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
 
 
-public class Node implements Runnable
+public class Node implements Runnable, MonitoredLink.Delegate
 {
-  private boolean running = true;
   private Map<Integer, OperatorThread> operators;
   private Link ctrlLink;
   
@@ -25,21 +25,15 @@ public class Node implements Runnable
   @Override
   public void run()
   {
-    try {
-      eventLoop();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    MonitoredLink.syncMonitorLink(ctrlLink, this);
   }
   
   
-  //TODO handle errors on the supervisor link (and on the creation of operator links)
-  private void eventLoop() throws Exception
+  @Override
+  public void messageReceived(CtrlMessage msg) throws Exception
   {
-    do {
-      CtrlMessage msg = (CtrlMessage) ctrlLink.recvMsg();
-      msg.executeOnNode(this);
-    } while (running);
+    //TODO handle errors on the supervisor link (and on the creation of operator links)
+    msg.executeOnNode(this);
   }
   
   
@@ -65,5 +59,12 @@ public class Node implements Runnable
   synchronized public Set<Integer> getCurrentlyInstantiatedOperators()
   {
     return operators.keySet();
+  }
+
+
+  @Override
+  public void linkIsBroken(Exception e)
+  {
+    System.out.println("link down");
   }
 }
