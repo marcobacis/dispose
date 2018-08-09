@@ -4,7 +4,7 @@ import dispose.net.node.Node;
 import dispose.net.node.Operator;
 import dispose.net.node.OperatorThread;
 
-public class DeployOperatorMsg implements CtrlMessage
+public class DeployOperatorMsg extends CtrlMessage
 {
   private static final long serialVersionUID = 8391051064976656835L;
   

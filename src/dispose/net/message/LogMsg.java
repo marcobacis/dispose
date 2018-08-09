@@ -2,7 +2,7 @@ package dispose.net.message;
 
 import dispose.net.node.Node;
 
-public class LogMsg implements CtrlMessage
+public class LogMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -2139442300869762386L;
   private String origin;

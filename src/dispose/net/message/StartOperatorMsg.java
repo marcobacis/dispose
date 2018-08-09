@@ -6,7 +6,7 @@ import java.util.Set;
 import dispose.net.node.Node;
 import dispose.net.node.OperatorThread;
 
-public class StartOperatorMsg implements CtrlMessage
+public class StartOperatorMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -2977267460391785421L;
 

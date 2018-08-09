@@ -5,7 +5,7 @@ import dispose.net.links.SocketLink;
 import dispose.net.node.Node;
 import dispose.net.node.OperatorThread;
 
-public class ConnectRemoteOperatorMsg implements CtrlMessage
+public class ConnectRemoteOperatorMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -7142514776117624364L;
   private int from;

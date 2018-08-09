@@ -4,7 +4,7 @@ import dispose.net.links.Link;
 import dispose.net.links.PipeLink;
 import dispose.net.node.Node;
 
-public class ConnectOperatorMsg implements CtrlMessage
+public class ConnectOperatorMsg extends CtrlMessage
 {
   private static final long serialVersionUID = 2787870806083718206L;
 
