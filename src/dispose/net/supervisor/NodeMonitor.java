@@ -40,8 +40,8 @@ public class NodeMonitor implements MonitoredLink.Delegate
   @Override
   public void messageReceived(Message msg) throws Exception
   {
-    System.out.println("message received");
-    return;
+    CtrlMessage cmsg = (CtrlMessage)msg;
+    cmsg.executeOnSupervisor(owner, this);
   }
 
 

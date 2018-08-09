@@ -26,7 +26,7 @@ public class CtrlMessage extends Message
    * supervisor.
    * @param node The supervisor who received the message. 
    * @throws Exception Causes the failure of the supervisor. */
-  public void executeOnSupervisor(Supervisor supervis) throws Exception
+  public void executeOnSupervisor(Supervisor supervis, NodeMonitor nodem) throws Exception
   {
     throw new Exception("message " + this.getClass().toString() + " not to be sent to a supervisor");
   }
