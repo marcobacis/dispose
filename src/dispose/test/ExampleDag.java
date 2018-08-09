@@ -11,7 +11,6 @@ public class ExampleDag
 {
   public static void main(String[] args)
   {
-
     Stream source = new FileProducerStream("ciao.csv");
 
     Stream a = source.apply(Op.MAX, 5);

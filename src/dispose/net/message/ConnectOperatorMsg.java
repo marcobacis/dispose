@@ -1,6 +1,5 @@
 package dispose.net.message;
 
-import dispose.net.links.Link;
 import dispose.net.links.PipeLink;
 import dispose.net.node.Node;
 
@@ -34,10 +33,12 @@ public class ConnectOperatorMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
-    Link pipeLink = new PipeLink();
+    PipeLink pipeLinkA = new PipeLink();
+    PipeLink pipeLinkB = new PipeLink();
+    pipeLinkA.connect(pipeLinkB);
     
-    node.getOperator(getFrom()).addOutput(pipeLink);
-    node.getOperator(getTo()).addInput(pipeLink);
+    node.getOperator(getFrom()).addOutput(pipeLinkA);
+    node.getOperator(getTo()).addInput(pipeLinkB);
   }
 
 }

@@ -23,14 +23,22 @@ public class PipeLink implements Link
   private ObjectOutputStream outStream;
   
   
-  public PipeLink() throws IOException{
+  public PipeLink() throws IOException
+  {
     this.outPipe = new PipedOutputStream();
     this.inPipe = new PipedInputStream();
+  }
+  
+  
+  public void connect(PipeLink oppositeLink) throws IOException
+  {
+    oppositeLink.inPipe.connect(this.outPipe);
+    this.inPipe.connect(oppositeLink.outPipe);
     
-    this.inPipe.connect(outPipe);
-        
     this.outStream = new ObjectOutputStream(this.outPipe);
+    oppositeLink.outStream = new ObjectOutputStream(oppositeLink.outPipe);
     this.inStream = new ObjectInputStream(this.inPipe);
+    oppositeLink.inStream = new ObjectInputStream(oppositeLink.inPipe);
   }
   
   

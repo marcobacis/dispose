@@ -23,8 +23,10 @@ public class NodeExerciser
   public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException
   {
     //SocketLink ctrl = SocketLink.connectFrom(Config.nodeCtrlPort);
-    PipeLink ctrl = new PipeLink();
-    Node node = new Node(ctrl);
+    PipeLink ctrlA = new PipeLink();
+    PipeLink ctrlB = new PipeLink();
+    ctrlA.connect(ctrlB);
+    Node node = new Node(ctrlB);
     Thread nthd = new Thread(node);
     nthd.start();
     
@@ -34,22 +36,22 @@ public class NodeExerciser
     
     Operator avg = new AvgWindowOperator(2, 2, 2);
     
-    ctrl.sendMsg(new DeployOperatorMsg(max));
-    ctrl.sendMsg(new DeployOperatorMsg(avg));
+    ctrlA.sendMsg(new DeployOperatorMsg(max));
+    ctrlA.sendMsg(new DeployOperatorMsg(avg));
     
-    ctrl.sendMsg(new ConnectOperatorMsg(max.getID(), avg.getID()));
+    ctrlA.sendMsg(new ConnectOperatorMsg(max.getID(), avg.getID()));
     
-    ctrl.sendMsg(new ConnectRemoteOperatorMsg(0, max.getID(), "127.0.0.1", 9002));
+    ctrlA.sendMsg(new ConnectRemoteOperatorMsg(0, max.getID(), "127.0.0.1", 9002));
     
     TimeUnit.SECONDS.sleep(5);
     
     SocketLink to = SocketLink.connectTo("127.0.0.1", 9002);
     
-    ctrl.sendMsg(new ConnectRemoteOperatorMsg(avg.getID(), 0, "127.0.0.1",9003));
+    ctrlA.sendMsg(new ConnectRemoteOperatorMsg(avg.getID(), 0, "127.0.0.1",9003));
     
     SocketLink from = SocketLink.connectFrom(9003);
     
-    ctrl.sendMsg(new StartOperatorMsg());
+    ctrlA.sendMsg(new StartOperatorMsg());
     
     TimeUnit.SECONDS.sleep(3);
     
