@@ -16,6 +16,7 @@ public class Supervisor implements Runnable
     nodes = new HashSet<>();
   }
 
+  
   @Override
   public void run()
   {
@@ -31,7 +32,7 @@ public class Supervisor implements Runnable
   }
   
   
-  synchronized protected void registerNode(NodeProxy nm)
+  synchronized public void registerNode(NodeProxy nm)
   {
     nodes.add(nm);
   }

@@ -23,7 +23,7 @@ public class MonitoredLink
   }
   
   
-  private MonitoredLink(Link adaptedLink, Delegate delegate)
+  public MonitoredLink(Link adaptedLink, Delegate delegate)
   {
     this.link = adaptedLink;
     this.delegate = delegate;
@@ -33,21 +33,21 @@ public class MonitoredLink
   public static void syncMonitorLink(Link link, Delegate delegate)
   {
     MonitoredLink mlink = new MonitoredLink(link, delegate);
-    mlink.monitorThreadMain();
+    mlink.monitorSynchronously();
   }
   
   
   public static MonitoredLink asyncMonitorLink(Link link, Delegate delegate)
   {
     MonitoredLink mlink = new MonitoredLink(link, delegate);
-    Thread thd = new Thread(() -> mlink.monitorThreadMain());
+    Thread thd = new Thread(() -> mlink.monitorSynchronously());
     thd.setName("link-monitor-" + Integer.toHexString(mlink.hashCode()));
     thd.start();
     return mlink;
   }
   
   
-  private void monitorThreadMain()
+  public void monitorSynchronously()
   {
     try {
       while (true) {
