@@ -1,7 +1,7 @@
 package dispose.net.message;
 
-import dispose.net.node.DataSource;
 import dispose.net.node.Node;
+import dispose.net.node.datasources.DataSource;
 import dispose.net.node.threads.SourceThread;
 
 public class DeployDataSourceThreadMsg extends CtrlMessage

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
 import dispose.net.node.ComputeThread;
-import dispose.net.node.DataSource;
+import dispose.net.node.datasources.DataSource;
 
 public class SourceThread extends ComputeThread
 {

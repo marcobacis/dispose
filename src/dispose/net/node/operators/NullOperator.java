@@ -6,7 +6,6 @@ import java.util.List;
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
 import dispose.net.common.UniversalTypeSet;
-import dispose.net.node.Operator;
 
 public class NullOperator implements Operator
 {

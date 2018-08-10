@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.FloatData;
-import dispose.net.node.DataSource;
 
 public class RandomFloatDataSrc implements DataSource
 {

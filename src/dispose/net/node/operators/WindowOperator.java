@@ -10,7 +10,6 @@ import javax.xml.crypto.Data;
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
 import dispose.net.common.types.NullData;
-import dispose.net.node.Operator;
 
 public abstract class WindowOperator implements Operator, Serializable
 {

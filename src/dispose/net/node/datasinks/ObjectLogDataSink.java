@@ -1,7 +1,6 @@
 package dispose.net.node.datasinks;
 
 import dispose.net.common.DataAtom;
-import dispose.net.node.DataSink;
 
 public class ObjectLogDataSink implements DataSink
 {

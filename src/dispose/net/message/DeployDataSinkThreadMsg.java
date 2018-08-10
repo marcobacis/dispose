@@ -1,7 +1,7 @@
 package dispose.net.message;
 
-import dispose.net.node.DataSink;
 import dispose.net.node.Node;
+import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.threads.SinkThread;
 
 public class DeployDataSinkThreadMsg extends CtrlMessage

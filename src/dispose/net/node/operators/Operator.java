@@ -1,27 +1,16 @@
-package dispose.net.node;
+package dispose.net.node.operators;
 
-import java.io.Serializable;
 import java.util.List;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
+import dispose.net.node.ComputeNode;
 
 /**
  * State machine implementing an operator.
  */
-public interface Operator extends Serializable
+public interface Operator extends ComputeNode
 {
-  /**
-   * Returns the operator id as in the job DAG
-   * @return the operator's id
-   */
-  public int getID();
-  
-  /**
-   * @return The clock of this object.
-   */
-  public int clock();
-  
   /**
    * Processes one data atom, returns the processed output, and advances the
    * clock.

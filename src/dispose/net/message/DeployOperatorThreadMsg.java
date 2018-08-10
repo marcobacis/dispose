@@ -1,7 +1,7 @@
 package dispose.net.message;
 
 import dispose.net.node.Node;
-import dispose.net.node.Operator;
+import dispose.net.node.operators.Operator;
 import dispose.net.node.threads.OperatorThread;
 
 public class DeployOperatorThreadMsg extends CtrlMessage

@@ -9,7 +9,7 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.Message;
 import dispose.net.node.ComputeThread;
-import dispose.net.node.DataSink;
+import dispose.net.node.datasinks.DataSink;
 
 public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
 {

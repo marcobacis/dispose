@@ -12,7 +12,7 @@ import dispose.net.links.MonitoredLink;
 import dispose.net.links.MonitoredLink.Delegate;
 import dispose.net.message.Message;
 import dispose.net.node.ComputeThread;
-import dispose.net.node.Operator;
+import dispose.net.node.operators.Operator;
 
 /**
  * Class representing a single operator thread.

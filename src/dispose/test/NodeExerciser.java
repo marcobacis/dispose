@@ -15,14 +15,14 @@ import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
 import dispose.net.message.StartThreadMsg;
-import dispose.net.node.DataSink;
-import dispose.net.node.DataSource;
 import dispose.net.node.Node;
-import dispose.net.node.Operator;
+import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasinks.ObjectLogDataSink;
+import dispose.net.node.datasources.DataSource;
 import dispose.net.node.datasources.RandomFloatDataSrc;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.MaxWindowOperator;
+import dispose.net.node.operators.Operator;
 
 
 public class NodeExerciser
