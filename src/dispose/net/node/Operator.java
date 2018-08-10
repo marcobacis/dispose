@@ -1,5 +1,6 @@
 package dispose.net.node;
 
+import java.io.Serializable;
 import java.util.List;
 
 import dispose.net.common.DataAtom;
@@ -8,7 +9,7 @@ import dispose.net.common.TypeSet;
 /**
  * State machine implementing an operator.
  */
-public interface Operator
+public interface Operator extends Serializable
 {
   /**
    * Returns the operator id as in the job DAG
