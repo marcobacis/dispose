@@ -1,5 +1,8 @@
 package dispose.net.node.operators;
 
+import java.util.Collections;
+import java.util.List;
+
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
 import dispose.net.common.UniversalTypeSet;
@@ -17,10 +20,10 @@ public class NullOperator implements Operator
 
 
   @Override
-  public DataAtom processAtom(DataAtom input)
+  public List<DataAtom> processAtom(DataAtom... input)
   {
     clock++;
-    return input;
+    return Collections.singletonList(input[0]);
   }
 
 

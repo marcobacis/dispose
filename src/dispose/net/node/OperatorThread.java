@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dispose.net.common.*;
 import dispose.net.common.types.*;
 import dispose.net.links.Link;
+import dispose.net.links.MonitoredLink;
 
 /**
  * Class representing a single operator thread.
@@ -15,27 +16,28 @@ import dispose.net.links.Link;
  * and the threads are linked by using Links.
  *
  */
-public class OperatorThread extends Thread
+public class OperatorThread 
 {
 
   private Operator operator;
   
   private int opID;
 
-  private ObjectInputStream inStream;
-  private List<ObjectOutputStream> outStreams;
+  private List<Link> inLinks = new ArrayList<>();
+  private List<MonitoredLink> inStreams = new ArrayList<>();
+  private List<Link> outStreams = new ArrayList<>();
 
   private ObjectInputStream ctrlIn;
   private ObjectOutputStream ctrlOut;
 
+  private DataAtom[] inputAtoms;
+  
   private AtomicBoolean running = new AtomicBoolean(true);
-
 
   public OperatorThread(Operator operator)
   {
     this.operator = operator;
     this.opID = operator.getID();
-    this.outStreams = new ArrayList<>();
   }
 
 
@@ -58,7 +60,7 @@ public class OperatorThread extends Thread
    */
   public void addInput(Link inputLink) throws IOException
   {
-    this.inStream = (ObjectInputStream) inputLink.getInputStream();
+    this.inLinks.add(inputLink);
   }
 
 
@@ -69,7 +71,7 @@ public class OperatorThread extends Thread
    */
   public void addOutput(Link outputLink) throws IOException
   {
-    this.outStreams.add((ObjectOutputStream) outputLink.getOutputStream());
+    this.outStreams.add(outputLink);
   }
 
   /**
@@ -88,38 +90,47 @@ public class OperatorThread extends Thread
     return this.opID;
   }
   
+  public void start() {
+    System.out.println("Start called on thread " + getID());
+    inputAtoms = new DataAtom[this.inLinks.size()];
+    
+    for(int i = 0; i < this.inLinks.size(); i++) {
+      this.inStreams.add(MonitoredLink.asyncMonitorLink(this.inLinks.get(i), new OperatorDelegate(this, i)));
+    }
+  }
+  
+  public void notifyElement(int idx, DataAtom element) {
+    this.inputAtoms[idx] = element;
+  }
+  
   /**
    * Main loop of the thread. Gets the control commands
    * and runs the operator on each new data on the input link.
    */
-  public void run() {
+  public void process() {
 
-
-    while(running.get()) {
-
-      //TODO handle ctrl link usage
-
+    if(true) {
+      System.out.println("Processing in operator " + getID());
       // I/O processing
       try {
-        DataAtom inAtom = (DataAtom) this.inStream.readObject();
-
-        DataAtom result = this.operator.processAtom(inAtom);
-
-        if(!(result instanceof NullData)) {
-          for(ObjectOutputStream out :  this.outStreams) {
-            out.writeObject(result);
-            out.flush();
+        
+        //List<DataAtom> result = this.operator.processAtom(inputAtoms);
+        List<DataAtom> result = new ArrayList<>();
+        result.add(inputAtoms[0]);
+        
+        if(result.size() > 0) {
+          for(DataAtom resAtom : result) {
+            if(!(resAtom instanceof NullData)) {
+              for(Link out : this.outStreams) {
+                System.out.println("Sending out -> " + resAtom);
+                out.sendMsg(resAtom);
+              }
+            }
           }
         }
         
-      } catch(ClassNotFoundException e){
-        System.out.println("Received object class not found! " + e.getMessage());
-        e.printStackTrace();
-      } catch(EOFException e) {
-        System.out.println("Link EOF encountered: " + e.getMessage());
-        return;
-      } catch (IOException e) {
-        System.out.println("IOException: " +e.getMessage());
+      } catch(Exception e) {
+        System.out.println("Exception while processing " + e.getMessage());
         e.printStackTrace();
       }
 

@@ -2,7 +2,10 @@ package dispose.net.node.operators;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import javax.xml.crypto.Data;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
@@ -18,9 +21,19 @@ public abstract class WindowOperator implements Operator, Serializable
   private int slide;
   private int id; 
 
-  protected int maxinputs = 0;
+  protected int maxinputs = 1;
   
   protected int inputs = 0;
+  
+  /**
+   * Represent the list of new elements added to each window,
+   * but not processed yet by applyOpToWindow (useful for join)
+   */
+  protected List<List<DataAtom>> newElems;
+  
+  /**
+   * Contains one window for each input stream (useful for joins or future operators)
+   */
   protected List<Window> windows = new ArrayList<>();
 
   public WindowOperator(int id, int size, int slide, int inputs) {
@@ -33,8 +46,10 @@ public abstract class WindowOperator implements Operator, Serializable
     this.slide = slide;
     
     this.inputs = inputs;
+    this.newElems = new ArrayList<>(inputs);
     for(int i = 0; i < inputs; i++) {
       this.windows.add(new Window(size, slide));
+      this.newElems.add(new LinkedList<>());
     }
 
   }
@@ -69,7 +84,8 @@ public abstract class WindowOperator implements Operator, Serializable
     //updates windows
     for(int i = 0; i < this.inputs; i++) {
       if(!(input[i] instanceof NullData)) {
-        this.windows.get(i).push(input[0]);
+        this.windows.get(i).push(input[i]);
+        this.newElems.get(i).add(input[i]);
         ready |= this.windows.get(i).ready();
       }
     }
@@ -77,10 +93,18 @@ public abstract class WindowOperator implements Operator, Serializable
     // apply operation on the windows
 
     if(ready){
-      for(Window win : this.windows)
-        win.move();
       
-      return applyOpToWindows();
+      List<DataAtom> result = applyOpToWindows();
+      
+      //reset new elements for ready windows
+      for(int w = 0; w < inputs; w++) {
+        if(this.windows.get(w).ready()) {
+          this.newElems.get(w).clear();
+          this.windows.get(w).move();
+        }
+      }
+      
+      return result;
     }
 
     return new ArrayList<>();

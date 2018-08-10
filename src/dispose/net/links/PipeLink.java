@@ -60,7 +60,7 @@ public class PipeLink implements Link
   public void sendMsg(Message message) throws IOException
   {
     this.outStream.writeObject(message);
-    this.outStream.flush();
+    //this.outStream.flush();
   }
 
 
