@@ -40,6 +40,8 @@ public class RandomFloatDataSrc implements DataSource
   @Override
   public DataAtom nextAtom()
   {
+    clock++;
+    
     if (rng == null)
       rng = new Random();
     
