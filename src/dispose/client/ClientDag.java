@@ -3,6 +3,7 @@ package dispose.client;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,8 +13,21 @@ import java.util.stream.Collectors;
 
 public class ClientDag implements Serializable
 {
-
   private static final long serialVersionUID = -1034121101025024802L;
+  private List<Stream> nodes;
+  private Stream source;
+  private Stream sink;
+  
+  
+  /** Private constructor, the dag can be created only by deriving it
+   * @param nodes List of nodes to set
+   * @param sink Sink node from which the dag is derived */
+  private ClientDag(List<Stream> nodes, Stream sink)
+  {
+    this.nodes = nodes;
+    this.source = sink.traceSource();
+    this.sink = sink;
+  }
 
 
   /**
@@ -51,23 +65,6 @@ public class ClientDag implements Serializable
   }
 
 
-  private List<Stream> nodes;
-
-  private Stream source;
-  private Stream sink;
-
-
-  /** Private constructor, the dag can be created only by deriving it
-   * @param nodes List of nodes to set
-   * @param sink Sink node from which the dag is derived */
-  private ClientDag(List<Stream> nodes, Stream sink)
-  {
-    this.nodes = nodes;
-    this.source = sink.traceSource();
-    this.sink = sink;
-  }
-
-
   /** Serializes the dag in the format sourceID, sinkID, (node), (node), ... */
   @Override
   public String toString()
@@ -80,4 +77,21 @@ public class ClientDag implements Serializable
     return String.join(",", sourceID, sinkID, nodesSerial);
   }
 
+  
+  public List<Stream> getNodes()
+  {
+    return Collections.unmodifiableList(nodes);
+  }
+  
+  
+  public boolean isSource(Stream s)
+  {
+    return s == source;
+  }
+  
+  
+  public boolean isSink(Stream s)
+  {
+    return s == sink;
+  }
 }
