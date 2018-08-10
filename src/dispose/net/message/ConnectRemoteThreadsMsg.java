@@ -58,7 +58,14 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
+    ComputeThread toop = node.getComputeThread(getTo());
     ComputeThread fromop = node.getComputeThread(getFrom());
+    
+    if (toop != null) {
+      SocketLink link = SocketLink.connectFrom(port());
+      toop.addInput(link);
+      return;
+    }
     
     if (fromop != null) {
       SocketLink link = SocketLink.connectTo(getRemoteHost(), port()); 
@@ -66,13 +73,8 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
       return;
     }
     
-    ComputeThread toop = node.getComputeThread(getTo());
-    if (toop == null)
-      throw new Exception("Operators " + Integer.toString(from) + " and " 
+    throw new Exception("Operators " + Integer.toString(from) + " and " 
           + Integer.toString(to) + " both don't exist here!");
-    
-    SocketLink link = SocketLink.connectFrom(port());
-    toop.addInput(link);
   }
   
 }
