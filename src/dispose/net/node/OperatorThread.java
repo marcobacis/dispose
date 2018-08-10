@@ -9,6 +9,8 @@ import dispose.net.common.*;
 import dispose.net.common.types.*;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
+import dispose.net.links.MonitoredLink.Delegate;
+import dispose.net.message.Message;
 
 /**
  * Class representing a single operator thread.
@@ -18,7 +20,6 @@ import dispose.net.links.MonitoredLink;
  */
 public class OperatorThread 
 {
-
   private Operator operator;
   
   private int opID;
@@ -27,13 +28,11 @@ public class OperatorThread
   private List<MonitoredLink> inStreams = new ArrayList<>();
   private List<Link> outStreams = new ArrayList<>();
 
-  private ObjectInputStream ctrlIn;
-  private ObjectOutputStream ctrlOut;
-
   private DataAtom[] inputAtoms;
   
   private AtomicBoolean running = new AtomicBoolean(true);
 
+  
   public OperatorThread(Operator operator)
   {
     this.operator = operator;
@@ -70,6 +69,7 @@ public class OperatorThread
     this.running.set(false);
   }
 
+  
   /**
    * Returns the operator's id in the job's dag
    * @return the operator id
@@ -77,6 +77,39 @@ public class OperatorThread
   public int getID() {
     return this.opID;
   }
+  
+  
+  private class OperatorDelegate implements Delegate
+  {
+    OperatorThread op;
+    int StreamIndex;
+    
+    
+    public OperatorDelegate(OperatorThread op, int idx)
+    {
+      this.op = op;
+      this.StreamIndex = idx;
+    }
+    
+    @Override
+    public void messageReceived(Message msg) throws Exception
+    {
+      
+      if(msg instanceof DataAtom) {
+        System.out.println("Message received -> " + ((FloatData) msg).floatValue());
+        this.op.notifyElement(StreamIndex, ((DataAtom) msg));
+        this.op.process();
+      }
+    }
+
+
+    @Override
+    public void linkIsBroken(Exception e)
+    {
+      System.out.println("Fuck the " + this.StreamIndex + "th link on operator " + op.getID() + " is broken");
+    }
+  }
+  
   
   public void start() {
     System.out.println("Start called on thread " + getID());
@@ -87,17 +120,18 @@ public class OperatorThread
     }
   }
   
+  
   public void notifyElement(int idx, DataAtom element) {
     this.inputAtoms[idx] = element;
   }
+  
   
   /**
    * Main loop of the thread. Gets the control commands
    * and runs the operator on each new data on the input link.
    */
   public void process() {
-
-    if(true) {
+    if (true) {
       System.out.println("Processing in operator " + getID());
       // I/O processing
       try {
@@ -119,9 +153,7 @@ public class OperatorThread
         System.out.println("Exception while processing " + e.getMessage());
         e.printStackTrace();
       }
-
     }
-
   }
 
 }
