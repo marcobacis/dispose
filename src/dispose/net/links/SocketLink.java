@@ -65,19 +65,6 @@ public class SocketLink implements Link
     
     return new SocketLink(sock);
   }
-
-  @Override
-  public InputStream getInputStream() throws IOException
-  {
-    return this.inStream;
-  }
-
-
-  @Override
-  public OutputStream getOutputStream() throws IOException
-  {
-    return this.outStream;
-  }
   
   
   @Override

@@ -106,10 +106,11 @@ public class Stream implements Serializable
    * Joins the stream with one or more streams based on the key,
    * returning the joined stream.
    * 
+   * @param window      Size of the window used for joining
    * @param streams     The streams to be joined to the current one
    * @return            A new stream representing the joined streams
    */
-  public Stream join(Stream... streams) {
+  public Stream join(int window, Stream... streams) {
     Stream[] parents = new Stream[streams.length+1];
     
     parents[0] = this;
@@ -118,7 +119,7 @@ public class Stream implements Serializable
       parents[i] = streams[i-1];
     }
     
-    return new Stream(Op.NONE, 1, parents);
+    return new Stream(Op.NONE, window, parents);
   }
   
   public void addChild(Stream child) {

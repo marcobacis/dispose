@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import dispose.net.common.Config;
 import dispose.net.common.types.FloatData;
+import dispose.net.links.MonitoredLink;
 import dispose.net.links.PipeLink;
 import dispose.net.links.SocketLink;
 import dispose.net.message.ConnectOperatorMsg;
@@ -53,16 +54,12 @@ public class NodeExerciser
     
     ctrlA.sendMsg(new StartOperatorMsg());
     
-    TimeUnit.SECONDS.sleep(3);
-    
     for(int i = 0; i < 15; i++) {
       to.sendMsg(new FloatData(i));
     }
-    
-    to.getOutputStream().flush();
-    
+        
     while(true) {
-      FloatData fd = (FloatData)from.recvMsg();
+      FloatData fd = (FloatData) from.recvMsg();
       System.out.println(fd + "; " + fd.getTimestamp() + "; " + fd.getUUID());
     }
   }

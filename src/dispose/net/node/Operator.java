@@ -1,5 +1,7 @@
 package dispose.net.node;
 
+import java.util.List;
+
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
 
@@ -23,10 +25,10 @@ public interface Operator
   /**
    * Processes one data atom, returns the processed output, and advances the
    * clock.
-   * @param input The data atom to be processed.
+   * @param input The data atom/s to be processed.
    * @return The result of the processing.
    */
-  public DataAtom processAtom(DataAtom input);
+  public List<DataAtom> processAtom(DataAtom... input);
   
   /**
    * @return The set of possible data atom classes that this operator can
