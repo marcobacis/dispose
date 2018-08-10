@@ -9,10 +9,10 @@ import dispose.net.common.types.FloatData;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.PipeLink;
 import dispose.net.links.SocketLink;
-import dispose.net.message.ConnectOperatorMsg;
-import dispose.net.message.ConnectRemoteOperatorMsg;
-import dispose.net.message.DeployOperatorMsg;
-import dispose.net.message.StartOperatorMsg;
+import dispose.net.message.ConnectThreadsMsg;
+import dispose.net.message.ConnectRemoteThreadsMsg;
+import dispose.net.message.DeployOperatorThreadMsg;
+import dispose.net.message.StartThreadMsg;
 import dispose.net.node.Node;
 import dispose.net.node.Operator;
 import dispose.net.node.operators.AvgWindowOperator;
@@ -37,22 +37,22 @@ public class NodeExerciser
     
     Operator avg = new AvgWindowOperator(2, 2, 2);
     
-    ctrlA.sendMsg(new DeployOperatorMsg(max));
-    ctrlA.sendMsg(new DeployOperatorMsg(avg));
+    ctrlA.sendMsg(new DeployOperatorThreadMsg(max));
+    ctrlA.sendMsg(new DeployOperatorThreadMsg(avg));
     
-    ctrlA.sendMsg(new ConnectOperatorMsg(max.getID(), avg.getID()));
+    ctrlA.sendMsg(new ConnectThreadsMsg(max.getID(), avg.getID()));
     
-    ctrlA.sendMsg(new ConnectRemoteOperatorMsg(0, max.getID(), "127.0.0.1", 9002));
+    ctrlA.sendMsg(new ConnectRemoteThreadsMsg(0, max.getID(), "127.0.0.1", 9002));
     
     TimeUnit.SECONDS.sleep(5);
     
     SocketLink to = SocketLink.connectTo("127.0.0.1", 9002);
     
-    ctrlA.sendMsg(new ConnectRemoteOperatorMsg(avg.getID(), 0, "127.0.0.1",9003));
+    ctrlA.sendMsg(new ConnectRemoteThreadsMsg(avg.getID(), 0, "127.0.0.1",9003));
     
     SocketLink from = SocketLink.connectFrom(9003);
     
-    ctrlA.sendMsg(new StartOperatorMsg());
+    ctrlA.sendMsg(new StartThreadMsg());
     
     for(int i = 0; i < 15; i++) {
       to.sendMsg(new FloatData(i));

@@ -3,7 +3,7 @@ package dispose.net.message;
 import dispose.net.links.PipeLink;
 import dispose.net.node.Node;
 
-public class ConnectOperatorMsg extends CtrlMessage
+public class ConnectThreadsMsg extends CtrlMessage
 {
   private static final long serialVersionUID = 2787870806083718206L;
 
@@ -11,7 +11,7 @@ public class ConnectOperatorMsg extends CtrlMessage
   private int toID;
   
   
-  public ConnectOperatorMsg(int from, int to)
+  public ConnectThreadsMsg(int from, int to)
   {
     this.fromID = from;
     this.toID = to;

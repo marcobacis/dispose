@@ -5,9 +5,8 @@ import java.util.Set;
 
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
-import dispose.net.node.threads.OperatorThread;
 
-public class StartOperatorMsg extends CtrlMessage
+public class StartThreadMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -2977267460391785421L;
 
@@ -16,13 +15,13 @@ public class StartOperatorMsg extends CtrlMessage
   private boolean all = false;
   
   
-  public StartOperatorMsg()
+  public StartThreadMsg()
   {
     this.all = true;
   }
   
   
-  public StartOperatorMsg(int id)
+  public StartThreadMsg(int id)
   {
     this.opID = id;
   }

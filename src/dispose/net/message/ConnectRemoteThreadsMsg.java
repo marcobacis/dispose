@@ -5,7 +5,7 @@ import dispose.net.links.SocketLink;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
 
-public class ConnectRemoteOperatorMsg extends CtrlMessage
+public class ConnectRemoteThreadsMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -7142514776117624364L;
   private int from;
@@ -15,7 +15,7 @@ public class ConnectRemoteOperatorMsg extends CtrlMessage
   private int port;
   
   
-  public ConnectRemoteOperatorMsg(int from, int to, String host)
+  public ConnectRemoteThreadsMsg(int from, int to, String host)
   {
     this.from = from;
     this.to = to;
@@ -24,7 +24,7 @@ public class ConnectRemoteOperatorMsg extends CtrlMessage
   }
   
   
-  public ConnectRemoteOperatorMsg(int from, int to, String host, int port)
+  public ConnectRemoteThreadsMsg(int from, int to, String host, int port)
   {
     this(from, to, host);
     this.port = port;

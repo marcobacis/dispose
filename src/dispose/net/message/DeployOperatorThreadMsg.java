@@ -4,14 +4,14 @@ import dispose.net.node.Node;
 import dispose.net.node.Operator;
 import dispose.net.node.threads.OperatorThread;
 
-public class DeployOperatorMsg extends CtrlMessage
+public class DeployOperatorThreadMsg extends CtrlMessage
 {
   private static final long serialVersionUID = 8391051064976656835L;
   
   private Operator op;
   
   
-  public DeployOperatorMsg(Operator op) {
+  public DeployOperatorThreadMsg(Operator op) {
     this.op = op;
   }
   
