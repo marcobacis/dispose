@@ -1,6 +1,7 @@
 package dispose.net.supervisor;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,5 +42,11 @@ public class Supervisor implements Runnable
   synchronized protected void removeNode(NodeProxy nm)
   {
     nodes.remove(nm);
+  }
+  
+  
+  synchronized protected Set<NodeProxy> getNodes()
+  {
+    return Collections.unmodifiableSet(new HashSet<>(nodes));
   }
 }

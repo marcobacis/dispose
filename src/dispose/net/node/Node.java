@@ -49,7 +49,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   }
   
   
-  public MonitoredLink getLink()
+  public MonitoredLink getControlLink()
   {
     return ctrlLink;
   }
