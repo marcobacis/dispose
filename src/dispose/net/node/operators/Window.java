@@ -56,12 +56,11 @@ public class Window implements Serializable
   public void push(DataAtom input)
   {
 
-    //updates window
-
-    if(this.isFull()) this.window.remove(this.window.size()-1);
-
     if(!(input instanceof NullData)) {
-      this.window.add(0,input);
+      
+      if(this.isFull()) this.window.remove(0);
+      
+      this.window.add(input);
 
       if(this.isFull()) this.currSlide++;
 
