@@ -37,8 +37,8 @@ public class ConnectOperatorMsg extends CtrlMessage
     PipeLink pipeLinkB = new PipeLink();
     pipeLinkA.connect(pipeLinkB);
     
-    node.getOperator(getFrom()).addOutput(pipeLinkA);
-    node.getOperator(getTo()).addInput(pipeLinkB);
+    node.getComputeThread(getFrom()).addOutput(pipeLinkA);
+    node.getComputeThread(getTo()).addInput(pipeLinkB);
   }
 
 }

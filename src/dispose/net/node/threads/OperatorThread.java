@@ -1,5 +1,5 @@
 
-package dispose.net.node;
+package dispose.net.node.threads;
 
 import java.io.*;
 import java.util.*;
@@ -11,6 +11,8 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.MonitoredLink.Delegate;
 import dispose.net.message.Message;
+import dispose.net.node.ComputeThread;
+import dispose.net.node.Operator;
 
 /**
  * Class representing a single operator thread.
@@ -18,11 +20,9 @@ import dispose.net.message.Message;
  * and the threads are linked by using Links.
  *
  */
-public class OperatorThread 
+public class OperatorThread extends ComputeThread
 {
   private Operator operator;
-  
-  private int opID;
 
   private List<Link> inLinks = new ArrayList<>();
   private List<MonitoredLink> inStreams = new ArrayList<>();
@@ -68,15 +68,6 @@ public class OperatorThread
   {
     this.running.set(false);
   }
-
-  
-  /**
-   * Returns the operator's id in the job's dag
-   * @return the operator id
-   */
-  public int getID() {
-    return this.opID;
-  }
   
   
   private class OperatorDelegate implements Delegate
@@ -85,11 +76,12 @@ public class OperatorThread
     int StreamIndex;
     
     
-    public OperatorDelegate(OperatorThread op, int idx)
+    OperatorDelegate(OperatorThread op, int idx)
     {
       this.op = op;
       this.StreamIndex = idx;
     }
+    
     
     @Override
     public void messageReceived(Message msg) throws Exception
@@ -121,7 +113,7 @@ public class OperatorThread
   }
   
   
-  public void notifyElement(int idx, DataAtom element) {
+  private void notifyElement(int idx, DataAtom element) {
     this.inputAtoms[idx] = element;
   }
   
@@ -130,7 +122,7 @@ public class OperatorThread
    * Main loop of the thread. Gets the control commands
    * and runs the operator on each new data on the input link.
    */
-  public void process() {
+  private void process() {
     if (true) {
       System.out.println("Processing in operator " + getID());
       // I/O processing

@@ -6,9 +6,9 @@ import dispose.net.common.types.FloatData;
 import dispose.net.links.PipeLink;
 
 import dispose.net.node.Operator;
-import dispose.net.node.OperatorThread;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.MaxWindowOperator;
+import dispose.net.node.threads.OperatorThread;
 
 
 public class OperatorsExerciser

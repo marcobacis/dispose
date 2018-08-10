@@ -2,8 +2,8 @@ package dispose.net.message;
 
 import dispose.net.common.Config;
 import dispose.net.links.SocketLink;
+import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
-import dispose.net.node.OperatorThread;
 
 public class ConnectRemoteOperatorMsg extends CtrlMessage
 {
@@ -58,7 +58,7 @@ public class ConnectRemoteOperatorMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
-    OperatorThread fromop = node.getOperator(getFrom());
+    ComputeThread fromop = node.getComputeThread(getFrom());
     
     if (fromop != null) {
       SocketLink link = SocketLink.connectTo(getRemoteHost(), port()); 
@@ -66,7 +66,7 @@ public class ConnectRemoteOperatorMsg extends CtrlMessage
       return;
     }
     
-    OperatorThread toop = node.getOperator(getTo());
+    ComputeThread toop = node.getComputeThread(getTo());
     if (toop == null)
       throw new Exception("Operators " + Integer.toString(from) + " and " 
           + Integer.toString(to) + " both don't exist here!");

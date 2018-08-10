@@ -1,6 +1,8 @@
 package dispose.net.node;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,11 +10,12 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.Message;
+import dispose.net.node.threads.OperatorThread;
 
 
 public class Node implements Runnable, MonitoredLink.Delegate
 {
-  private Map<Integer, OperatorThread> operators;
+  private Map<Integer, ComputeThread> operators;
   private MonitoredLink ctrlLink;
   
   
@@ -43,9 +46,18 @@ public class Node implements Runnable, MonitoredLink.Delegate
    * not materialized on this node.
    * @param opid The ID of the operator.
    * @return An operator or null. */
-  synchronized public OperatorThread getOperator(int opid)
+  synchronized public ComputeThread getComputeThread(int opid)
   {
     return operators.get(opid);
+  }
+  
+  
+  /** Add an instantiated operator to the local directory of operators.
+   * @param opid The ID of the operator.
+   * @param opthd The materialized operator. */
+  synchronized public void addComputeThread(int opid, ComputeThread opthd)
+  {
+    operators.put(opid, opthd);
   }
   
   
@@ -55,18 +67,9 @@ public class Node implements Runnable, MonitoredLink.Delegate
   }
   
   
-  /** Add an instantiated operator to the local directory of operators.
-   * @param opid The ID of the operator.
-   * @param opthd The materialized operator. */
-  synchronized public void addOperator(int opid, OperatorThread opthd)
+  synchronized public Set<Integer> getCurrentlyInstantiatedThreads()
   {
-    operators.put(opid, opthd);
-  }
-  
-  
-  synchronized public Set<Integer> getCurrentlyInstantiatedOperators()
-  {
-    return operators.keySet();
+    return Collections.unmodifiableSet(new HashSet<>(operators.keySet()));
   }
 
 

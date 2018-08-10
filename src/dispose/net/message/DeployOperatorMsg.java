@@ -2,7 +2,7 @@ package dispose.net.message;
 
 import dispose.net.node.Node;
 import dispose.net.node.Operator;
-import dispose.net.node.OperatorThread;
+import dispose.net.node.threads.OperatorThread;
 
 public class DeployOperatorMsg extends CtrlMessage
 {
@@ -27,6 +27,6 @@ public class DeployOperatorMsg extends CtrlMessage
   {
     Operator op = getOperator();
     OperatorThread opthd = new OperatorThread(op);
-    node.addOperator(op.getID(), opthd);
+    node.addComputeThread(op.getID(), opthd);
   }
 }

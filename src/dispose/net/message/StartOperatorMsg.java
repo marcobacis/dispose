@@ -3,8 +3,9 @@ package dispose.net.message;
 import java.util.Collections;
 import java.util.Set;
 
+import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
-import dispose.net.node.OperatorThread;
+import dispose.net.node.threads.OperatorThread;
 
 public class StartOperatorMsg extends CtrlMessage
 {
@@ -45,12 +46,12 @@ public class StartOperatorMsg extends CtrlMessage
     Set<Integer> ops;
     
     if (all())
-      ops = node.getCurrentlyInstantiatedOperators();
+      ops = node.getCurrentlyInstantiatedThreads();
     else
       ops = Collections.singleton(id());
     
     for (Integer opid: ops) {
-      OperatorThread opthd = node.getOperator(opid);
+      ComputeThread opthd = node.getComputeThread(opid);
       opthd.start();
     }
   }
