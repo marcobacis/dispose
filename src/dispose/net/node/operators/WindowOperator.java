@@ -125,6 +125,6 @@ public abstract class WindowOperator implements Operator, Serializable
 
 
   @Override
-  public abstract Class<DataAtom> outputRestriction(Class<DataAtom> intype);
+  public abstract Class<? extends DataAtom> outputRestriction(Class<? extends DataAtom> intype);
 
 }

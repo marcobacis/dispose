@@ -45,7 +45,7 @@ public class MinWindowOperator extends WindowOperator
 
 
   @Override
-  public Class<DataAtom> outputRestriction(Class<DataAtom> intype)
+  public Class<? extends DataAtom> outputRestriction(Class<? extends DataAtom> intype)
   {
     return intype;
   }

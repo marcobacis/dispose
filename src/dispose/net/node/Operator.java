@@ -10,7 +10,6 @@ import dispose.net.common.TypeSet;
  */
 public interface Operator
 {
-  
   /**
    * Returns the operator id as in the job DAG
    * @return the operator's id
@@ -40,5 +39,5 @@ public interface Operator
    * @return The data type of the output when the input is of the specified
    * data type.
    */
-  public Class<DataAtom> outputRestriction(Class<DataAtom> intype);
+  public Class<? extends DataAtom> outputRestriction(Class<? extends DataAtom> intype);
 }
