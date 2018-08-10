@@ -56,7 +56,6 @@ public class NodeExerciser
     
     for(int i = 0; i < 15; i++) {
       to.sendMsg(new FloatData(i));
-      TimeUnit.SECONDS.sleep(3);
     }
         
     while(true) {

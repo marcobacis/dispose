@@ -42,7 +42,7 @@ public class OperatorsExerciser
     maxWrapper.addOutput(maxAvgA);
     
     avgWrapper.addInput(maxAvgB);
-    avgWrapper.addOutput(from);
+    avgWrapper.addOutput(avgHost);
     
     maxWrapper.start();
     avgWrapper.start();

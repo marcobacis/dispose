@@ -42,18 +42,6 @@ public class OperatorThread
 
 
   /**
-   * Sets the control link from the node manager / supervisor
-   * @param ctrlLink    Control link to use
-   * @throws IOException
-   */
-  public void setCtrlLink(Link ctrlLink) throws IOException
-  {
-    this.ctrlIn = (ObjectInputStream) ctrlLink.getInputStream();
-    this.ctrlOut = (ObjectOutputStream) ctrlLink.getOutputStream();
-  }
-
-
-  /**
    * Adds an input link to get the atoms from
    * @param inputLink   Input link to use
    * @throws IOException
@@ -114,9 +102,7 @@ public class OperatorThread
       // I/O processing
       try {
         
-        //List<DataAtom> result = this.operator.processAtom(inputAtoms);
-        List<DataAtom> result = new ArrayList<>();
-        result.add(inputAtoms[0]);
+        List<DataAtom> result = this.operator.processAtom(inputAtoms);
         
         if(result.size() > 0) {
           for(DataAtom resAtom : result) {

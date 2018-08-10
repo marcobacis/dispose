@@ -40,27 +40,13 @@ public class PipeLink implements Link
     this.inStream = new ObjectInputStream(this.inPipe);
     oppositeLink.inStream = new ObjectInputStream(oppositeLink.inPipe);
   }
-  
-  
-  @Override
-  public InputStream getInputStream() throws IOException
-  {
-    return this.inStream;
-  }
-
-
-  @Override
-  public OutputStream getOutputStream() throws IOException
-  {
-    return this.outStream;
-  }
 
   
   @Override
   public void sendMsg(Message message) throws IOException
   {
     this.outStream.writeObject(message);
-    //this.outStream.flush();
+    this.outStream.flush();
   }
 
 
