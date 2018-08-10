@@ -14,7 +14,7 @@ public abstract class ComputeThread
    * @param inputLink   Input link to use
    * @throws IOException
    */
-  public abstract void addInput(Link inputLink) throws IOException;
+  public abstract void addInput(Link inputLink) throws Exception;
   
   
   /**
@@ -22,7 +22,7 @@ public abstract class ComputeThread
    * @param outputLink  The output link to use
    * @throws IOException
    */
-  public abstract void addOutput(Link outputLink) throws IOException;
+  public abstract void addOutput(Link outputLink) throws Exception;
   
   
   /**
