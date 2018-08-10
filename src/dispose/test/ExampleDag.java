@@ -1,11 +1,16 @@
 
-package dispose.client;
+package dispose.test;
 
-public class ClientMain
+import dispose.client.ClientDag;
+import dispose.client.FileConsumerStream;
+import dispose.client.FileProducerStream;
+import dispose.client.Op;
+import dispose.client.Stream;
+
+public class ExampleDag
 {
   public static void main(String[] args)
   {
-
     Stream source = new FileProducerStream("ciao.csv");
 
     Stream a = source.apply(Op.MAX, 5);

@@ -13,20 +13,20 @@ import dispose.net.message.Message;
 public class Node implements Runnable, MonitoredLink.Delegate
 {
   private Map<Integer, OperatorThread> operators;
-  private Link ctrlLink;
+  private MonitoredLink ctrlLink;
   
   
   public Node(Link ctrlLink)
   {
     operators = new HashMap<>();
-    this.ctrlLink = ctrlLink;
+    this.ctrlLink = new MonitoredLink(ctrlLink, this);
   }
 
   
   @Override
   public void run()
   {
-    MonitoredLink.syncMonitorLink(ctrlLink, this);
+    ctrlLink.monitorSynchronously();
   }
   
   
@@ -46,6 +46,12 @@ public class Node implements Runnable, MonitoredLink.Delegate
   synchronized public OperatorThread getOperator(int opid)
   {
     return operators.get(opid);
+  }
+  
+  
+  public MonitoredLink getLink()
+  {
+    return ctrlLink;
   }
   
   

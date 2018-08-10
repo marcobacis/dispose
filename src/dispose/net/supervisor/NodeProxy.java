@@ -9,13 +9,13 @@ import dispose.net.message.CtrlMessage;
 import dispose.net.message.LogMsg;
 import dispose.net.message.Message;
 
-public class NodeMonitor implements MonitoredLink.Delegate
+public class NodeProxy implements MonitoredLink.Delegate
 {
   private Supervisor owner;
   private MonitoredLink link;
   
   
-  public NodeMonitor(Supervisor owner, Link link) throws IOException
+  public NodeProxy(Supervisor owner, Link link) throws IOException
   {
     this.owner = owner;
     this.link = MonitoredLink.asyncMonitorLink(link, this);
@@ -23,10 +23,10 @@ public class NodeMonitor implements MonitoredLink.Delegate
   }
   
   
-  public static NodeMonitor connectNodeMonitor(Supervisor owner, int port) throws IOException
+  public static NodeProxy connectNodeMonitor(Supervisor owner, int port) throws IOException
   {
     SocketLink tlink = SocketLink.connectFrom(port);
-    NodeMonitor nm = new NodeMonitor(owner, tlink);
+    NodeProxy nm = new NodeProxy(owner, tlink);
     return nm;
   }
 
