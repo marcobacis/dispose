@@ -61,6 +61,10 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
     ComputeThread toop = node.getComputeThread(getTo());
     ComputeThread fromop = node.getComputeThread(getFrom());
     
+    if (toop != null && fromop != null) {
+      throw new Exception("Both operators are instantiated in the same node");
+    }
+    
     if (toop != null) {
       SocketLink link = SocketLink.connectFrom(port());
       toop.addInput(link);

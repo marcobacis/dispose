@@ -44,7 +44,7 @@ public class Supervisor implements Runnable
   }
   
   
-  synchronized protected Set<NodeProxy> getNodes()
+  synchronized public Set<NodeProxy> getNodes()
   {
     return Collections.unmodifiableSet(new HashSet<>(nodes));
   }

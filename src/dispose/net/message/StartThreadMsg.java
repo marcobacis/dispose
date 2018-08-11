@@ -5,6 +5,8 @@ import java.util.Set;
 
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
+import dispose.net.supervisor.NodeProxy;
+import dispose.net.supervisor.Supervisor;
 
 public class StartThreadMsg extends CtrlMessage
 {
@@ -52,6 +54,16 @@ public class StartThreadMsg extends CtrlMessage
     for (Integer opid: ops) {
       ComputeThread opthd = node.getComputeThread(opid);
       opthd.start();
+    }
+  }
+  
+  
+  @Override
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
+  {
+    Set<NodeProxy> nodes = supervis.getNodes();
+    for (NodeProxy node: nodes) {
+      node.getLink().sendMsg(this);
     }
   }
 }

@@ -133,6 +133,12 @@ public class Stream implements Serializable
     return this.parents;
   }
   
+  
+  public List<Stream> getChildren()
+  {
+    return this.children;
+  }
+  
   /**
    * Returns the current operation's window size
    */
