@@ -4,27 +4,12 @@
   <artifactId>dispose</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>Dispose</name>
-  <build>
-    <sourceDirectory>src</sourceDirectory>
-    <resources>
-      <resource>
-        <directory>src</directory>
-        <excludes>
-          <exclude>**/*.java</exclude>
-        </excludes>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <packaging>pom</packaging>
+  <modules>
+    <module>dispose-common</module>
+    <module>dispose-node</module>
+    <module>dispose-supervisor</module>
+  </modules>
   <dependencies>
   	<dependency>
   		<groupId>junit</groupId>
