@@ -10,7 +10,6 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.Message;
-import dispose.net.node.threads.OperatorThread;
 
 
 public class Node implements Runnable, MonitoredLink.Delegate

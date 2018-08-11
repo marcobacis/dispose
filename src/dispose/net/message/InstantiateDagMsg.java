@@ -48,7 +48,6 @@ public class InstantiateDagMsg extends CtrlMessage
     {
       int node1;
       int node2;
-      int port;
       
       LinkDescription(int n1, int n2)
       {
@@ -178,28 +177,28 @@ public class InstantiateDagMsg extends CtrlMessage
       physNode.getLink().sendMsg(msg);
     }
     
-    /* Materialize Global Links */
+    /* Materialize Global Links
+     * TODO: parallelize link instantiation */
     
     int port = 9000;
     for (LinkDescription remoteLink: remoteLinks) {
       NodeProxy physNode1 = logNodeToPhysNode.get(remoteLink.node1);
       NodeProxy physNode2 = logNodeToPhysNode.get(remoteLink.node2);
-      remoteLink.port = port;
+
       CtrlMessage msg = new ConnectRemoteThreadsMsg(remoteLink.node1, remoteLink.node2, physNode1.getNetworkAddress(), port);
       physNode2.getLink().sendMsgAndRequestAck(msg, AckType.RECEPTION);
       physNode2.getLink().waitAck(msg);
+      
+      CtrlMessage msg2 = new ConnectRemoteThreadsMsg(remoteLink.node1, remoteLink.node2, physNode2.getNetworkAddress(), port);
+      physNode1.getLink().sendMsgAndRequestAck(msg2, AckType.PROCESSING);
+      physNode1.getLink().waitAck(msg2);
+      
       port++;
-    }
-    
-    for (LinkDescription remoteLink: remoteLinks) {
-      NodeProxy physNode2 = logNodeToPhysNode.get(remoteLink.node2);
-      CtrlMessage msg = new ConnectRemoteThreadsMsg(remoteLink.node1, remoteLink.node2, physNode2.getNetworkAddress(), remoteLink.port);
-      physNode2.getLink().sendMsgAndRequestAck(msg, AckType.RECEPTION);
-      physNode2.getLink().waitAck(msg);
     }
     
     /* And we're finally done! */
     /* TODO: garbage collection on failure */
     /* TODO: retry on failure with retry count */
+    System.out.println("dag instantiated!");
   }
 }
