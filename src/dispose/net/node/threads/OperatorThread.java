@@ -132,7 +132,7 @@ public class OperatorThread extends ComputeThread
         
         if(result.size() > 0) {
           for(DataAtom resAtom : result) {
-            if(!(resAtom instanceof NullData)) {
+            if (resAtom != null) {
               for(Link out : this.outStreams) {
                 System.out.println("Sending out -> " + resAtom);
                 out.sendMsg(resAtom);
