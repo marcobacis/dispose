@@ -76,6 +76,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   @Override
   public void linkIsBroken(Exception e)
   {
-    System.out.println("link down");
+    System.out.println("link down in node");
+    e.printStackTrace();
   }
 }

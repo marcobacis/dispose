@@ -10,13 +10,13 @@ import dispose.net.supervisor.Supervisor;
 
 public class ExampleJob
 {
-  public static void main(String[] args) throws IOException, InterruptedException
+  public static void main(String[] args) throws Exception
   {
     Supervisor localSupervisor = new Supervisor();
     Thread supvThread = new Thread(localSupervisor);
     supvThread.start();
-    PipeLink _localLinkA = new PipeLink();
-    PipeLink _localLinkB = new PipeLink();
+    ObjectFifoLink _localLinkA = new ObjectFifoLink();
+    ObjectFifoLink _localLinkB = new ObjectFifoLink();
     _localLinkA.connect(_localLinkB);
     Node localNode = new Node(_localLinkA);
     Thread nodeThread = new Thread(localNode);

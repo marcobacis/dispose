@@ -1,6 +1,5 @@
 package dispose.net.links;
 
-import java.io.IOException;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,13 +84,13 @@ public class MonitoredLink
   }
   
   
-  public void sendMsg(Message message) throws IOException
+  public void sendMsg(Message message) throws Exception
   {
     link.sendMsg(message);
   }
   
   
-  public synchronized void sendMsgAndRequestAck(Message message) throws IOException
+  public synchronized void sendMsgAndRequestAck(Message message) throws Exception
   {
     AckRequestMsg ackmsg = new AckRequestMsg(message);
     ackStatus.put(message.getUUID(), false);

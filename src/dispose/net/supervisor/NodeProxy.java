@@ -1,7 +1,5 @@
 package dispose.net.supervisor;
 
-import java.io.IOException;
-
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.SocketLink;
@@ -15,7 +13,8 @@ public class NodeProxy implements MonitoredLink.Delegate
   private MonitoredLink link;
   
   
-  public NodeProxy(Supervisor owner, Link link) throws IOException
+  
+  public NodeProxy(Supervisor owner, Link link) throws Exception
   {
     this.owner = owner;
     this.link = MonitoredLink.asyncMonitorLink(link, this);
@@ -23,7 +22,7 @@ public class NodeProxy implements MonitoredLink.Delegate
   }
   
   
-  public static NodeProxy connectNodeMonitor(Supervisor owner, int port) throws IOException
+  public static NodeProxy connectNodeMonitor(Supervisor owner, int port) throws Exception
   {
     SocketLink tlink = SocketLink.connectFrom(port);
     NodeProxy nm = new NodeProxy(owner, tlink);

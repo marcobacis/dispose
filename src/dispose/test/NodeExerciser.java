@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import dispose.net.common.Config;
 import dispose.net.common.types.FloatData;
 import dispose.net.links.MonitoredLink;
+import dispose.net.links.ObjectFifoLink;
 import dispose.net.links.PipeLink;
 import dispose.net.links.SocketLink;
 import dispose.net.message.ConnectThreadsMsg;
@@ -29,15 +30,15 @@ public class NodeExerciser
 {
   public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException
   {
-    PipeLink ctrl0A = new PipeLink();
-    PipeLink ctrl0B = new PipeLink();
+    ObjectFifoLink ctrl0A = new ObjectFifoLink();
+    ObjectFifoLink ctrl0B = new ObjectFifoLink();
     ctrl0A.connect(ctrl0B);
     Node node0 = new Node(ctrl0B);
     Thread nthd0 = new Thread(node0);
     nthd0.start();
     
-    PipeLink ctrl1A = new PipeLink();
-    PipeLink ctrl1B = new PipeLink();
+    ObjectFifoLink ctrl1A = new ObjectFifoLink();
+    ObjectFifoLink ctrl1B = new ObjectFifoLink();
     ctrl1A.connect(ctrl1B);
     Node node1 = new Node(ctrl1B);
     Thread nthd1 = new Thread(node1);

@@ -63,7 +63,7 @@ public class SourceThread extends ComputeThread
           link.sendMsg(d);
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.out.println("oh oh we've lost the link \\OwO/");
       e.printStackTrace();
     }

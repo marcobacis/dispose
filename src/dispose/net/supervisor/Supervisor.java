@@ -1,6 +1,5 @@
 package dispose.net.supervisor;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +24,7 @@ public class Supervisor implements Runnable
       try {
         NodeProxy nm = NodeProxy.connectNodeMonitor(this, Config.nodeCtrlPort);
         registerNode(nm);
-      } catch (IOException e) {
+      } catch (Exception e) {
         e.printStackTrace();
         return;
       }
