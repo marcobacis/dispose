@@ -4,6 +4,8 @@ import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import dispose.net.message.Message;
 
@@ -13,6 +15,8 @@ public class MonitoredLink
   private Delegate delegate;
   private boolean intentionallyClosed = false;
   private Map<UUID, Boolean> ackStatus = new HashMap<>();
+  private ExecutorService msgExecutor;
+  
   
   public enum AckType
   {
@@ -55,6 +59,8 @@ public class MonitoredLink
   
   public void monitorSynchronously()
   {
+    msgExecutor = Executors.newSingleThreadExecutor();
+    
     try {
       while (true) {
         Message m = link.recvMsg(0);
@@ -63,21 +69,21 @@ public class MonitoredLink
           AckRequestMsg ackreq = (AckRequestMsg) m;
           Message realm = ackreq.getMessage();
           
-          if (ackreq.getType() == AckType.RECEPTION)
+          if (ackreq.getType() == AckType.RECEPTION) {
             sendMsg(new AckMsg(realm.getUUID()));
-          
-          delegate.messageReceived(realm);
-          
-          if (ackreq.getType() == AckType.PROCESSING)
-            sendMsg(new AckMsg(realm.getUUID()));
-          
+            msgExecutor.submit(() -> execMessage(realm, false));
+            
+          } else if (ackreq.getType() == AckType.PROCESSING) {
+            msgExecutor.submit(() -> execMessage(realm, true));
+          }
           
         } else if (m instanceof AckMsg) {
           UUID uuid = ((AckMsg) m).getAcknowledgedUUID();
           confirmAck(uuid);
           
         } else {
-          delegate.messageReceived(m);
+          msgExecutor.submit(() -> execMessage(m, false));
+          
         }
       }
     } catch (SocketException e) {
@@ -86,6 +92,19 @@ public class MonitoredLink
       _close();
     } catch (Exception e) {
       delegate.linkIsBroken(e);
+      _close();
+    }
+  }
+  
+  
+  private void execMessage(Message msg, boolean sendAck)
+  {
+    try {
+      delegate.messageReceived(msg);
+      if (sendAck)
+        sendMsg(new AckMsg(msg.getUUID()));
+    } catch (Exception e) {
+      e.printStackTrace();
       _close();
     }
   }
@@ -132,6 +151,7 @@ public class MonitoredLink
         e.printStackTrace();
       }
     }
+    ackStatus.remove(waituuid);
     
     if (ackStatus == null)
       throw new Exception("the node is down!");
@@ -150,5 +170,6 @@ public class MonitoredLink
     link.close();
     ackStatus = null;
     notifyAll();
+    msgExecutor.shutdown();
   }
 }
