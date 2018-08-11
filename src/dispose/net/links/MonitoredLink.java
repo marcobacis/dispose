@@ -14,6 +14,12 @@ public class MonitoredLink
   private boolean intentionallyClosed = false;
   private Map<UUID, Boolean> ackStatus = new HashMap<>();
   
+  public enum AckType
+  {
+    RECEPTION,
+    PROCESSING
+  }
+  
   
   public interface Delegate
   {
@@ -54,9 +60,17 @@ public class MonitoredLink
         Message m = link.recvMsg(0);
         
         if (m instanceof AckRequestMsg) {
-          Message realm = ((AckRequestMsg) m).getMessage();
+          AckRequestMsg ackreq = (AckRequestMsg) m;
+          Message realm = ackreq.getMessage();
+          
+          if (ackreq.getType() == AckType.RECEPTION)
+            sendMsg(new AckMsg(realm.getUUID()));
+          
           delegate.messageReceived(realm);
-          sendMsg(new AckMsg(realm.getUUID()));
+          
+          if (ackreq.getType() == AckType.PROCESSING)
+            sendMsg(new AckMsg(realm.getUUID()));
+          
           
         } else if (m instanceof AckMsg) {
           UUID uuid = ((AckMsg) m).getAcknowledgedUUID();
@@ -92,7 +106,13 @@ public class MonitoredLink
   
   public synchronized void sendMsgAndRequestAck(Message message) throws Exception
   {
-    AckRequestMsg ackmsg = new AckRequestMsg(message);
+    sendMsgAndRequestAck(message, AckType.PROCESSING);
+  }
+  
+  
+  public synchronized void sendMsgAndRequestAck(Message message, AckType type) throws Exception
+  {
+    AckRequestMsg ackmsg = new AckRequestMsg(message, type);
     ackStatus.put(message.getUUID(), false);
     link.sendMsg(ackmsg);
   }
