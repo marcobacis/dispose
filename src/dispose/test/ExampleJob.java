@@ -7,7 +7,10 @@ import dispose.client.FileConsumerStream;
 import dispose.client.FileProducerStream;
 import dispose.client.Op;
 import dispose.client.Stream;
+import dispose.net.common.Config;
 import dispose.net.links.ObjectFifoLink;
+import dispose.net.links.SocketLink;
+import dispose.net.message.CtrlMessage;
 import dispose.net.message.InstantiateDagMsg;
 import dispose.net.message.StartThreadMsg;
 import dispose.net.node.Node;
@@ -18,16 +21,27 @@ public class ExampleJob
 {
   public static void main(String[] args) throws Exception
   {
-    Supervisor localSupervisor = new Supervisor();
-    Thread supvThread = new Thread(localSupervisor);
-    supvThread.start();
-    ObjectFifoLink _localLinkA = new ObjectFifoLink();
-    ObjectFifoLink _localLinkB = new ObjectFifoLink();
-    _localLinkA.connect(_localLinkB);
-    Node localNode = new Node(_localLinkA);
-    Thread nodeThread = new Thread(localNode);
-    nodeThread.start();
-    localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB, NodeProxy.LOCAL_NETWORK_ADDRESS));
+    boolean remoteSupervisor = true;
+    Node localNode;
+    
+    if (!remoteSupervisor) {
+      Supervisor localSupervisor = new Supervisor();
+      Thread supvThread = new Thread(localSupervisor);
+      supvThread.start();
+      ObjectFifoLink _localLinkA = new ObjectFifoLink();
+      ObjectFifoLink _localLinkB = new ObjectFifoLink();
+      _localLinkA.connect(_localLinkB);
+      localNode = new Node(_localLinkA);
+      Thread nodeThread = new Thread(localNode);
+      nodeThread.start();
+      localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB, NodeProxy.LOCAL_NETWORK_ADDRESS));
+      
+    } else {
+      SocketLink ctrl = SocketLink.connectTo("127.0.0.1", Config.nodeCtrlPort);
+      localNode = new Node(ctrl);
+      Thread nodeThread = new Thread(localNode);
+      nodeThread.start();
+    }
     
     Stream source = new FileProducerStream("ciao.csv");
     Stream a = source.apply(Op.MAX, 5);
