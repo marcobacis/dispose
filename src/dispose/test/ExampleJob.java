@@ -21,7 +21,7 @@ public class ExampleJob
     Node localNode = new Node(_localLinkA);
     Thread nodeThread = new Thread(localNode);
     nodeThread.start();
-    localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB));
+    localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB, NodeProxy.LOCAL_NETWORK_ADDRESS));
     
     while (true) {
       TimeUnit.SECONDS.sleep(1);

@@ -11,12 +11,15 @@ public class NodeProxy implements MonitoredLink.Delegate
 {
   private Supervisor owner;
   private MonitoredLink link;
+  private String networkAddress;
+  
+  public static String LOCAL_NETWORK_ADDRESS = "127.0.0.1";
   
   
-  
-  public NodeProxy(Supervisor owner, Link link) throws Exception
+  public NodeProxy(Supervisor owner, Link link, String networkAddress) throws Exception
   {
     this.owner = owner;
+    this.networkAddress = networkAddress;
     this.link = MonitoredLink.asyncMonitorLink(link, this);
     this.link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
   }
@@ -25,7 +28,7 @@ public class NodeProxy implements MonitoredLink.Delegate
   public static NodeProxy connectNodeMonitor(Supervisor owner, int port) throws Exception
   {
     SocketLink tlink = SocketLink.connectFrom(port);
-    NodeProxy nm = new NodeProxy(owner, tlink);
+    NodeProxy nm = new NodeProxy(owner, tlink, tlink.remoteHostAddress());
     return nm;
   }
 
@@ -56,5 +59,11 @@ public class NodeProxy implements MonitoredLink.Delegate
   public MonitoredLink getLink()
   {
     return link;
+  }
+  
+  
+  public String getNetworkAddress()
+  {
+    return networkAddress;
   }
 }

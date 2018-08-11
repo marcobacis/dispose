@@ -12,7 +12,6 @@ import dispose.net.message.Message;
  */
 public class SocketLink implements Link
 {
-  
   Socket sock;
   
   ObjectInputStream inStream;
@@ -107,5 +106,11 @@ public class SocketLink implements Link
       //does nothing
       return;
     }
+  }
+  
+  
+  public String remoteHostAddress()
+  {
+    return sock.getRemoteSocketAddress().toString();
   }
 }
