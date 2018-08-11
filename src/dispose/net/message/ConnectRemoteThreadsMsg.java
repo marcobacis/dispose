@@ -1,5 +1,7 @@
 package dispose.net.message;
 
+import java.util.concurrent.TimeUnit;
+
 import dispose.net.common.Config;
 import dispose.net.links.SocketLink;
 import dispose.net.node.ComputeThread;
@@ -72,8 +74,29 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
     }
     
     if (fromop != null) {
-      SocketLink link = SocketLink.connectTo(getRemoteHost(), port()); 
-      fromop.addOutput(link);
+      SocketLink link = null;
+      boolean success = false;
+      int attemptsLeft = 5;
+      
+      while (!success && attemptsLeft > 0) {
+        System.out.println("connection attempt to " + this.host + "; left " + Integer.toString(attemptsLeft));
+        try {
+          link = SocketLink.connectTo(getRemoteHost(), port());
+          success = true;
+        } catch (Exception e) {
+          System.out.println("failed");
+          attemptsLeft--;
+          if (attemptsLeft > 0) {
+            System.out.println("will retry in a while");
+            TimeUnit.SECONDS.sleep(1);
+          }
+        }
+      }
+      
+      if (success && link != null)
+        fromop.addOutput(link);
+      else
+        throw new Exception("connection failed");
       return;
     }
     
