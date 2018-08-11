@@ -38,15 +38,7 @@ public class InstantiateDagMsg extends CtrlMessage
   @Override
   public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
   {
-    Thread thd = new Thread(() -> {
-      try {
-        instantiateDag(supervis, nodem);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    });
-    thd.setName("dag-instantiation");
-    thd.start();
+    instantiateDag(supervis, nodem);
   }
   
   

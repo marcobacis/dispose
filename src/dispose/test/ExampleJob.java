@@ -36,8 +36,10 @@ public class ExampleJob
     Stream consumer = new FileConsumerStream("output.csv", a.join(4, d, b).apply(Op.MAX, 1));
     ClientDag compDag = ClientDag.derive(consumer);
     
-    localNode.getControlLink().sendMsg(new InstantiateDagMsg(compDag));
-    TimeUnit.SECONDS.sleep(1);
+    CtrlMessage idmsg = new InstantiateDagMsg(compDag);
+    localNode.getControlLink().sendMsgAndRequestAck(idmsg);
+    localNode.getControlLink().waitAck(idmsg);
+    System.out.println("the dag has been instantiated!");
     localNode.getControlLink().sendMsg(new StartThreadMsg());
     
     while (true) {
