@@ -1,5 +1,6 @@
 package dispose.test;
 
+import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 import dispose.client.ClientDag;
@@ -37,7 +38,9 @@ public class ExampleJob
       localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB, NodeProxy.LOCAL_NETWORK_ADDRESS));
       
     } else {
-      SocketLink ctrl = SocketLink.connectTo("127.0.0.1", Config.nodeCtrlPort);
+      String lhost = InetAddress.getLocalHost().getHostAddress();
+      System.out.println(lhost);
+      SocketLink ctrl = SocketLink.connectTo(lhost, Config.nodeCtrlPort);
       localNode = new Node(ctrl);
       Thread nodeThread = new Thread(localNode);
       nodeThread.start();
