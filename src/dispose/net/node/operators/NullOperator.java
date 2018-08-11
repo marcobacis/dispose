@@ -9,7 +9,16 @@ import dispose.net.common.UniversalTypeSet;
 
 public class NullOperator implements Operator
 {
-  int clock = 0;
+  private static final long serialVersionUID = 1L;
+  private int clock = 0;
+  private int id;
+  
+  
+  public NullOperator(int id)
+  {
+    this.id = id;
+  }
+  
   
   @Override
   public int clock()
@@ -43,7 +52,7 @@ public class NullOperator implements Operator
   @Override
   public int getID()
   {
-    return 0;
+    return id;
   }
 
 }

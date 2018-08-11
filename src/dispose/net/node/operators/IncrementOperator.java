@@ -10,6 +10,14 @@ import dispose.net.common.types.FloatData;
 
 public class IncrementOperator extends NullOperator
 {
+  private static final long serialVersionUID = -296933436361640146L;
+
+
+  public IncrementOperator(int id)
+  {
+    super(id);
+  }
+
 
   @Override
   public List<DataAtom> processAtom(DataAtom input[])
