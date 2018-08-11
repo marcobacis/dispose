@@ -1,6 +1,6 @@
 package dispose.net.message;
 
-import dispose.net.links.PipeLink;
+import dispose.net.links.ObjectFifoLink;
 import dispose.net.node.Node;
 
 public class ConnectThreadsMsg extends CtrlMessage
@@ -33,8 +33,8 @@ public class ConnectThreadsMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
-    PipeLink pipeLinkA = new PipeLink();
-    PipeLink pipeLinkB = new PipeLink();
+    ObjectFifoLink pipeLinkA = new ObjectFifoLink();
+    ObjectFifoLink pipeLinkB = new ObjectFifoLink();
     pipeLinkA.connect(pipeLinkB);
     
     node.getComputeThread(getFrom()).addOutput(pipeLinkA);
