@@ -111,6 +111,6 @@ public class SocketLink implements Link
   
   public String remoteHostAddress()
   {
-    return sock.getRemoteSocketAddress().toString();
+    return sock.getInetAddress().getHostAddress();
   }
 }
