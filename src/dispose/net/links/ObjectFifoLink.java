@@ -22,7 +22,7 @@ public class ObjectFifoLink implements Link
   @Override
   public void sendMsg(Message message) throws InterruptedException
   {
-    toOther.offer(message, 365, TimeUnit.DAYS);
+    toOther.put(message);
   }
 
 
