@@ -1,14 +1,14 @@
 
 package dispose.test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.FloatData;
-import dispose.net.common.types.NullData;
 import dispose.net.node.operators.MaxWindowOperator;
 
 /**
@@ -90,7 +90,7 @@ public class WindowOperatorTest
       }
     }
     
-    assert(result.size() == trusted.size());
+    assertEquals(result.size(), trusted.size());
     
     int reslength = result.size();
     
@@ -101,10 +101,10 @@ public class WindowOperatorTest
           double res = ((FloatData) resAtom).floatValue();
           double max = ((FloatData) trustAtom).floatValue();
       
-          assert(res == max);
+          assertEquals(max, res, 0);
       }
       
-      assert(resAtom.getClass() == trustAtom.getClass());
+      assertEquals(trustAtom.getClass(), resAtom.getClass());
     }
     
   }

@@ -1,7 +1,6 @@
 
 package dispose.net.node.operators;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 

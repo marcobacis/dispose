@@ -1,10 +1,10 @@
 package dispose.test;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.FloatData;
@@ -18,21 +18,21 @@ public class WindowTest
   public void testIsFull()
   {
     Window win = new Window(5, 1);
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new FloatData(0));
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new FloatData(0));
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new FloatData(0));
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new FloatData(0));
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new NullData());
-    assert(!win.isFull());
+    assertFalse(win.isFull());
     win.push(new FloatData(0));
-    assert(win.isFull());
+    assertTrue(win.isFull());
     win.push(new FloatData(0));
-    assert(win.isFull());
+    assertTrue(win.isFull());
   }
 
   @Test
@@ -45,31 +45,31 @@ public class WindowTest
     assert(win.isEmpty());
     
     win.push(new FloatData(0));
-    assert(!win.isEmpty());
+    assertFalse(win.isEmpty());
     win.push(new FloatData(0));
-    assert(!win.isEmpty());
+    assertFalse(win.isEmpty());
     win.push(new FloatData(0));
-    assert(!win.isEmpty());
+    assertFalse(win.isEmpty());
     win.push(new FloatData(0));
-    assert(!win.isEmpty());
+    assertFalse(win.isEmpty());
     
     win.reset();
-    assert(win.isEmpty());
+    assertTrue(win.isEmpty());
   }
   
   @Test
   public void testReset() {
     Window win = new Window(5, 1);
     
-    assert(win.isEmpty());
+    assertTrue(win.isEmpty());
     
     for (int i = 0; i < 6; i++) {
       win.push(new FloatData(Math.random()));
     }
     
-    assert(win.isFull());
+    assertTrue(win.isFull());
     win.reset();
-    assert(win.isEmpty());
+    assertTrue(win.isEmpty());
   }
   
   @Test
@@ -124,7 +124,7 @@ public class WindowTest
       trusted.add(elems);
     }
         
-    assert(result.size() == trusted.size());
+    assertEquals(trusted.size(), result.size());
     
     int reslength = result.size();
     
@@ -132,14 +132,14 @@ public class WindowTest
       List<DataAtom> resElems = result.get(i);
       List<DataAtom> trustElems = trusted.get(i);
       
-      assert(resElems.size() == trustElems.size());
+      assertEquals(trustElems.size(), resElems.size());
             
       for(int e = 0; e < resElems.size(); e++) {
         DataAtom res = resElems.get(e);
         DataAtom trust = trustElems.get(e);
-        assert(res.getClass() == trust.getClass());
+        assertEquals(trust.getClass(), res.getClass());
         if(res instanceof FloatData)
-          assert(((FloatData) res).floatValue() == ((FloatData) trust).floatValue());
+          assertEquals(trust, res);
       }
     }
   }
