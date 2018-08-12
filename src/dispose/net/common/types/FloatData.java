@@ -17,6 +17,18 @@ public class FloatData extends DataAtom
   }
   
   @Override
+  public boolean equals(Object o) {
+    
+    if(o == this) return true;
+    
+    if(!(o instanceof FloatData)) return false;
+    
+    double val = ((FloatData) o).floatValue();
+    
+    return Double.compare(floatValue(), val) == 0;
+  }
+  
+  @Override
   public String toString()
   {
     return "FloatData = " + Double.toString(data);

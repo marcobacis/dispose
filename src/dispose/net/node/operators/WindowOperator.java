@@ -28,7 +28,7 @@ public abstract class WindowOperator implements Operator, Serializable
    * Represent the list of new elements added to each window,
    * but not processed yet by applyOpToWindow (useful for join)
    */
-  protected List<List<DataAtom>> newElems;
+  protected List<Integer> newElems;
   
   /**
    * Contains one window for each input stream (useful for joins or future operators)
@@ -48,7 +48,7 @@ public abstract class WindowOperator implements Operator, Serializable
     this.newElems = new ArrayList<>(inputs);
     for(int i = 0; i < inputs; i++) {
       this.windows.add(new Window(size, slide));
-      this.newElems.add(new LinkedList<>());
+      this.newElems.add(0);
     }
 
   }
@@ -84,7 +84,7 @@ public abstract class WindowOperator implements Operator, Serializable
     for(int i = 0; i < this.inputs; i++) {
       if(!(input[i] instanceof NullData)) {
         this.windows.get(i).push(input[i]);
-        this.newElems.get(i).add(input[i]);
+        this.newElems.set(i, this.newElems.get(i) + 1);
         ready |= this.windows.get(i).ready();
       }
     }
@@ -98,7 +98,7 @@ public abstract class WindowOperator implements Operator, Serializable
       //reset new elements for ready windows
       for(int w = 0; w < inputs; w++) {
         if(this.windows.get(w).ready()) {
-          this.newElems.get(w).clear();
+          this.newElems.set(w,0);
           this.windows.get(w).move();
         }
       }
