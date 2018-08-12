@@ -33,18 +33,20 @@ public class JoinOperator extends WindowOperator
     
     List<DataAtom> result = new LinkedList<>();
 
-    //TODO extend to multiple concurrent join (> 2 streams, for now just 2 at a time as in the client API)
+    //TODO extend to multiple concurrent join (> 2 streams, for now just 2 at a time as in the client API) 
     
     //joins forward (new elems on left -> all elements on right)
-    List<DataAtom> toJoin = left.subList(left.size() - newLeft, left.size());
+    int leftNewIdx = Math.max(left.size() - newLeft, 0);
+    List<DataAtom> toJoin = left.subList(leftNewIdx, left.size());
     List<DataAtom> toBeJoined = right;
     result.addAll(join(toJoin, toBeJoined));
     
     //joins backward (old elements on left -> new elements on right)
-    toJoin = left.subList(0, left.size() - newLeft);
-    toBeJoined = right.subList(right.size() - newRight, right.size());
+    int rightNewIdx = Math.max(right.size() - newRight, 0);
+    toJoin = left.subList(0, leftNewIdx);
+    toBeJoined = right.subList(rightNewIdx, right.size());
     result.addAll(join(toJoin, toBeJoined));
-    
+        
     return result;
   }
 

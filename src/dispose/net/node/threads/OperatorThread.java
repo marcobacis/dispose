@@ -3,6 +3,7 @@ package dispose.net.node.threads;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.net.common.*;
@@ -29,6 +30,8 @@ public class OperatorThread extends ComputeThread
   private List<Link> outStreams = new ArrayList<>();
 
   private DataAtom[] inputAtoms;
+  
+  private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
   
   private AtomicBoolean running = new AtomicBoolean(true);
 
@@ -88,7 +91,6 @@ public class OperatorThread extends ComputeThread
     {
       
       if(msg instanceof DataAtom) {
-        System.out.println("Message received -> " + ((FloatData) msg).floatValue());
         this.op.notifyElement(StreamIndex, ((DataAtom) msg));
         this.op.process();
       }
@@ -98,14 +100,18 @@ public class OperatorThread extends ComputeThread
     @Override
     public void linkIsBroken(Exception e)
     {
-      System.out.println("Fuck the " + this.StreamIndex + "th link on operator " + op.getID() + " is broken");
+      System.out.println("The " + this.StreamIndex + "th link on operator " + op.getID() + " is broken");
     }
   }
   
   
   public void start() {
-    System.out.println("Start called on thread " + getID());
-    inputAtoms = new DataAtom[this.inLinks.size()];
+    this.inputAtoms = new DataAtom[this.inLinks.size()];
+    this.inputQueues = new ArrayList<>(this.inLinks.size());
+    for(int d = 0; d < this.inLinks.size(); d++) {
+      inputAtoms[d] = new NullData();
+      this.inputQueues.add(new ConcurrentLinkedQueue<>());
+    }
     
     for(int i = 0; i < this.inLinks.size(); i++) {
       this.inStreams.add(MonitoredLink.asyncMonitorLink(this.inLinks.get(i), new OperatorDelegate(this, i)));
@@ -114,7 +120,7 @@ public class OperatorThread extends ComputeThread
   
   
   private void notifyElement(int idx, DataAtom element) {
-    this.inputAtoms[idx] = element;
+    this.inputQueues.get(idx).offer(element);
   }
   
   
@@ -123,18 +129,25 @@ public class OperatorThread extends ComputeThread
    * and runs the operator on each new data on the input link.
    */
   private void process() {
-    if (true) {
-      System.out.println("Processing in operator " + getID());
+    if (this.running.get()) {
       // I/O processing
       try {
         
+        //grabs inputs from the queues
+        for(int i = 0; i < this.inputAtoms.length; i++) {
+          DataAtom inAtom = this.inputQueues.get(i).poll();
+          if(inAtom != null) inputAtoms[i] = inAtom;
+          else inputAtoms[i] = new NullData();
+        }
+        
+        //process the inputs
         List<DataAtom> result = this.operator.processAtom(inputAtoms);
         
+        //sends non-null results to all the children streams
         if(result.size() > 0) {
           for(DataAtom resAtom : result) {
-            if (resAtom != null) {
+            if (resAtom != null && !(resAtom instanceof NullData)) {
               for(Link out : this.outStreams) {
-                System.out.println("Sending out -> " + resAtom);
                 out.sendMsg(resAtom);
               }
             }

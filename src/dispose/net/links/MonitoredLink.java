@@ -48,7 +48,6 @@ public class MonitoredLink
   
   public static MonitoredLink asyncMonitorLink(Link link, Delegate delegate)
   {
-    System.out.println("Async link in creation");
     MonitoredLink mlink = new MonitoredLink(link, delegate);
     Thread thd = new Thread(() -> mlink.monitorSynchronously());
     thd.setName("link-monitor-" + Integer.toHexString(mlink.hashCode()));

@@ -15,6 +15,7 @@ import dispose.net.node.datasinks.ObjectLogDataSink;
 import dispose.net.node.datasources.DataSource;
 import dispose.net.node.datasources.RandomFloatDataSrc;
 import dispose.net.node.operators.AvgWindowOperator;
+import dispose.net.node.operators.JoinOperator;
 import dispose.net.node.operators.MaxWindowOperator;
 import dispose.net.node.operators.MinWindowOperator;
 import dispose.net.node.operators.NullOperator;
@@ -92,7 +93,11 @@ public class InstantiateDagMsg extends CtrlMessage
             logNode = new MinWindowOperator(stream.getID(), stream.getWindowSize(), stream.getWindowSlide());
             break;
           case NONE:
-            logNode = new NullOperator(stream.getID());
+            if(stream.getParents().size() > 1) {
+              logNode = new JoinOperator(stream.getID(), stream.getWindowSize(), stream.getWindowSlide(), stream.getParents().size());
+            } else {
+              logNode = new NullOperator(stream.getID());
+            }
             break;
           case SUM:
             logNode = new SumWindowOperator(stream.getID(), stream.getWindowSize(), stream.getWindowSlide());
