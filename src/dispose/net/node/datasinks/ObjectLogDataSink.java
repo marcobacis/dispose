@@ -1,5 +1,6 @@
 package dispose.net.node.datasinks;
 
+import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 
 public class ObjectLogDataSink implements DataSink
@@ -31,7 +32,7 @@ public class ObjectLogDataSink implements DataSink
   @Override
   public void processAtom(DataAtom atom)
   {
-    System.out.println("[objid=" + Integer.toString(id) + "] " + atom.toString());
+    DisposeLog.debug(this, "[objid=", id, "] ", atom.toString());
     clock++;
   }
 

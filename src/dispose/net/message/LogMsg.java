@@ -1,5 +1,6 @@
 package dispose.net.message;
 
+import dispose.log.DisposeLog;
 import dispose.net.node.Node;
 
 public class LogMsg extends CtrlMessage
@@ -19,6 +20,6 @@ public class LogMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
-    System.out.println("[" + origin + "] " + message);
+    DisposeLog.info(this, "[", origin, "] ", message);
   }
 }

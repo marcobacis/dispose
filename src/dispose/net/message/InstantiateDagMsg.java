@@ -8,6 +8,7 @@ import java.util.Map;
 import dispose.client.ClientDag;
 import dispose.client.Op;
 import dispose.client.Stream;
+import dispose.log.DisposeLog;
 import dispose.net.links.MonitoredLink.AckType;
 import dispose.net.node.ComputeNode;
 import dispose.net.node.datasinks.DataSink;
@@ -62,8 +63,8 @@ public class InstantiateDagMsg extends CtrlMessage
       }
     }
  
-    System.out.println("InstantiateDag!!");
-    System.out.println(dag.toString());
+    DisposeLog.debug(this, "InstantiateDag!!");
+    DisposeLog.debug(this, dag.toString());
     
     /* convert the DAG to a list of ComputeNodes and links */
     
@@ -204,6 +205,6 @@ public class InstantiateDagMsg extends CtrlMessage
     /* And we're finally done! */
     /* TODO: garbage collection on failure */
     /* TODO: retry on failure with retry count */
-    System.out.println("dag instantiated!");
+    DisposeLog.info(this, "dag instantiated!");
   }
 }

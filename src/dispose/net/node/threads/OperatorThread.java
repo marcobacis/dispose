@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import dispose.log.DisposeLog;
 import dispose.net.common.*;
 import dispose.net.common.types.*;
 import dispose.net.links.Link;
@@ -100,7 +101,7 @@ public class OperatorThread extends ComputeThread
     @Override
     public void linkIsBroken(Exception e)
     {
-      System.out.println("The " + this.StreamIndex + "th link on operator " + op.getID() + " is broken");
+      DisposeLog.error(this, "The ", this.StreamIndex, "th link on operator ", op.getID(), " is broken");
     }
   }
   
@@ -155,7 +156,7 @@ public class OperatorThread extends ComputeThread
         }
         
       } catch(Exception e) {
-        System.out.println("Exception while processing " + e.getMessage());
+        DisposeLog.error(this, "Exception while processing ", e.getMessage());
         e.printStackTrace();
       }
     }

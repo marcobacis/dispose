@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
 import dispose.net.node.ComputeThread;
@@ -64,7 +65,7 @@ public class SourceThread extends ComputeThread
         }
       }
     } catch (Exception e) {
-      System.out.println("oh oh we've lost the link \\OwO/");
+      DisposeLog.error(this, "oh oh we've lost the link \\OwO/");
       e.printStackTrace();
     }
   }

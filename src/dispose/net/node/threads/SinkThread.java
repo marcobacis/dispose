@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
@@ -72,7 +73,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   @Override
   public void linkIsBroken(Exception e)
   {
-    System.out.println("link is down");
+    DisposeLog.error(this, "link is down");
   }
 
 }

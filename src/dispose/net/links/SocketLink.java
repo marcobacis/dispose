@@ -3,6 +3,7 @@ package dispose.net.links;
 import java.io.*;
 import java.net.*;
 
+import dispose.log.DisposeLog;
 import dispose.net.message.Message;
 
 
@@ -40,7 +41,7 @@ public class SocketLink implements Link
 
     Socket sock = new Socket(host, port);
 
-    System.out.println("Connected at " + host + " port " + port);
+    DisposeLog.info(SocketLink.class, "Connected at " + host + " port " + port);
     
     return new SocketLink(sock);
   }
@@ -53,12 +54,12 @@ public class SocketLink implements Link
    */
   public static SocketLink connectFrom(int port) throws IOException {
     
-    System.out.println("Waiting on port " + port);
+    DisposeLog.info(SocketLink.class, "Waiting on port " + port);
     ServerSocket server = new ServerSocket(port);
     
     Socket sock = server.accept();
     
-    System.out.println("Accepted on port " + port);
+    DisposeLog.info(SocketLink.class, "Accepted on port " + port);
     
     server.close();
     
