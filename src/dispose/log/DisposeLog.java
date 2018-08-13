@@ -18,18 +18,29 @@ public class DisposeLog
   public static void log(LogPriority pri, Object origin, Object[] msg)
   {
     Date date = new Date();
+    
+    if (pri == null)
+      pri = LogPriority.CRITICAL;
+    
     String sorigin;
-    if (origin instanceof String) {
+    if (origin == null) {
+      sorigin = "<null>";
+    } if (origin instanceof String) {
       sorigin = (String)origin;
     } else if (origin instanceof Class) {
       sorigin = ((Class<?>)origin).getSimpleName();
     } else {
       sorigin = origin.getClass().getSimpleName();
     }
+    
     StringBuilder smsg = new StringBuilder();
     for (Object mobj: msg) {
-      smsg.append(mobj.toString());
+      if (mobj == null)
+        smsg.append("<null>");
+      else
+        smsg.append(mobj.toString());
     }
+    
     DisposeLog.standardEmitter.emitMessage(pri, date, sorigin, smsg.toString());
   }
   
