@@ -44,7 +44,7 @@ public class Window implements Serializable
    * Returns the current window's elements
    * @return the current window's elements
    */
-  public List<DataAtom> getElements() {
+  public synchronized List<DataAtom> getElements() {
     List<DataAtom> elements = new ArrayList<>(this.window);
     return elements;
   }
@@ -53,7 +53,7 @@ public class Window implements Serializable
    * Inserts an element into the window
    * @param input   The element to be pushed
    */
-  public void push(DataAtom input)
+  public synchronized void push(DataAtom input)
   {
 
     if(!(input instanceof NullData)) {

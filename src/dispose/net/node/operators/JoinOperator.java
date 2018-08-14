@@ -68,6 +68,9 @@ public class JoinOperator extends WindowOperator
   protected DataAtom join(DataAtom left, DataAtom right)
   {
 
+    if(left == null || right == null)
+      return new NullData();
+    
     if (left.getClass() != right.getClass())
       return new NullData();
 

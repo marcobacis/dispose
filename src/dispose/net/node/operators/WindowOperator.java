@@ -72,7 +72,7 @@ public abstract class WindowOperator implements Operator, Serializable
   protected abstract List<DataAtom> applyOpToWindows();
 
   @Override
-  public List<DataAtom> processAtom(DataAtom... input)
+  public synchronized List<DataAtom> processAtom(DataAtom... input)
   {
     this.clock++;
 
@@ -82,7 +82,7 @@ public abstract class WindowOperator implements Operator, Serializable
 
     //updates windows
     for(int i = 0; i < this.inputs; i++) {
-      if(!(input[i] instanceof NullData)) {
+      if(input[i] != null && input[i] instanceof DataAtom) {
         this.windows.get(i).push(input[i]);
         this.newElems.set(i, this.newElems.get(i) + 1);
         ready |= this.windows.get(i).ready();
