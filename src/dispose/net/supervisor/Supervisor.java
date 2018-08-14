@@ -1,20 +1,18 @@
 package dispose.net.supervisor;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import dispose.net.common.Config;
 
 public class Supervisor implements Runnable
 {
-  private Set<NodeProxy> nodes;
-  
-  
-  public Supervisor()
-  {
-    nodes = new HashSet<>();
-  }
+  private Set<NodeProxy> nodes = new HashSet<>();
+  private Map<UUID, Job> currentJobs = new HashMap<>();
 
   
   @Override
@@ -47,5 +45,17 @@ public class Supervisor implements Runnable
   synchronized public Set<NodeProxy> getNodes()
   {
     return Collections.unmodifiableSet(new HashSet<>(nodes));
+  }
+  
+  
+  synchronized public void createJob(Job j)
+  {
+    currentJobs.put(j.getID(), j);
+  }
+  
+  
+  synchronized public Job getJob(UUID jobid)
+  {
+    return currentJobs.get(jobid);
   }
 }
