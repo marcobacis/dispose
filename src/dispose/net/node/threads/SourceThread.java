@@ -40,7 +40,7 @@ public class SourceThread extends ComputeThread
 
 
   @Override
-  public void kill()
+  public void pause()
   {
     running.set(false);
   }

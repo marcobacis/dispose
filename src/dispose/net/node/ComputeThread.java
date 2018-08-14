@@ -28,7 +28,7 @@ public abstract class ComputeThread
   /**
    * Sets the current cycle of the thread as the last one
    */
-  public abstract void kill();
+  public abstract void pause();
   
   
   public abstract void start();

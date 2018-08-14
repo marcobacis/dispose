@@ -42,7 +42,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
 
 
   @Override
-  public void kill()
+  public void pause()
   {
     running.set(false);
     for (MonitoredLink ml: inStreams) {
