@@ -2,14 +2,10 @@ package dispose.net.node.operators;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-
-import javax.xml.crypto.Data;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
-import dispose.net.common.types.NullData;
 
 public abstract class WindowOperator implements Operator, Serializable
 {
@@ -29,7 +25,7 @@ public abstract class WindowOperator implements Operator, Serializable
    * but not processed yet by applyOpToWindow (useful for join)
    */
   protected List<Integer> newElems;
-  
+    
   /**
    * Contains one window for each input stream (useful for joins or future operators)
    */
@@ -64,7 +60,7 @@ public abstract class WindowOperator implements Operator, Serializable
   {
     return this.clock;
   }
-
+  
   @Override
   public int getNumInputs()
   {

@@ -12,8 +12,7 @@ public class NullOperator implements Operator
   private static final long serialVersionUID = 1L;
   private int clock = 0;
   private int id;
-  
-  
+    
   public NullOperator(int id)
   {
     this.id = id;

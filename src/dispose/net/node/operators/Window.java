@@ -2,7 +2,6 @@ package dispose.net.node.operators;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import dispose.net.common.DataAtom;

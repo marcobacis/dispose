@@ -67,6 +67,8 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   {
     DataAtom da = (DataAtom)msg;
     dataSink.processAtom(da);
+    //TODO send back a ACK to the downstream operator (need to know from which stream this msg came)
+    this.inStreams.get(0).sendMsg(da); //quickfix assuming only one stream just for testing... FIXME!
   }
 
 

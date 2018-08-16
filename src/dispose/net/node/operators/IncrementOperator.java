@@ -20,7 +20,7 @@ public class IncrementOperator extends NullOperator
 
 
   @Override
-  public List<DataAtom> processAtom(DataAtom input[])
+  public List<DataAtom> processAtom(DataAtom... input)
   {
     FloatData fdata = (FloatData) input[0];
     

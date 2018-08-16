@@ -38,7 +38,6 @@ public class OperatorThread extends ComputeThread
 
   private AtomicBoolean running = new AtomicBoolean(false);
 
-
   public OperatorThread(Operator operator)
   {
     this.operator = operator;
@@ -219,6 +218,14 @@ public class OperatorThread extends ComputeThread
 
         // process the inputs
         List<DataAtom> result = this.operator.processAtom(inputAtoms);
+        
+        for(int i = 0; i < this.inStreams.size(); i++) {
+          DataAtom current = this.inputAtoms[i];
+          if(current != null && !(current instanceof NullData))
+              this.inStreams.get(i).sendMsg(current);
+        }
+        
+        DisposeLog.debug(OperatorThread.class, "Operator " + this.opID + " caching " + this.outCaches.get(0).getAtoms());
 
         // sends non-null results to all the children streams
         if (result.size() > 0) {
