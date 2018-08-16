@@ -26,6 +26,11 @@ public class NullOperator implements Operator
     return clock;
   }
 
+  @Override
+  public int getNumInputs()
+  {
+    return 1;
+  }
 
   @Override
   public List<DataAtom> processAtom(DataAtom... input)

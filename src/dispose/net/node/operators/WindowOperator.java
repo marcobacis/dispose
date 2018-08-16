@@ -65,6 +65,12 @@ public abstract class WindowOperator implements Operator, Serializable
     return this.clock;
   }
 
+  @Override
+  public int getNumInputs()
+  {
+    return this.inputs;
+  }
+  
   /**
    * Apply the Operator's operation to the current window
    * @return

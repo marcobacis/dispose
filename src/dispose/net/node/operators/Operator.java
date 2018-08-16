@@ -20,6 +20,11 @@ public interface Operator extends ComputeNode
   public List<DataAtom> processAtom(DataAtom... input);
   
   /**
+   * @return the number of inputs that are given to the operator
+   */
+  public int getNumInputs();
+  
+  /**
    * @return The set of possible data atom classes that this operator can
    * process. 
    */
