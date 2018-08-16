@@ -3,8 +3,11 @@ package dispose.net.supervisor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import dispose.client.ClientDag;
@@ -15,6 +18,7 @@ import dispose.net.message.CtrlMessage;
 import dispose.net.message.DeployDataSinkThreadMsg;
 import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
+import dispose.net.message.StartThreadMsg;
 import dispose.net.node.ComputeNode;
 import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasources.DataSource;
@@ -24,10 +28,10 @@ import dispose.net.supervisor.JobDag.LinkDescription;
 public class Job
 {
   private UUID id;
-  private JobDag jobDag;
-  private Map<Integer, NodeProxy> logNodeToPhysNode;
   private Supervisor supervis;
   private NodeProxy owner;
+  private JobDag jobDag;
+  private Map<Integer, NodeProxy> logNodeToPhysNode;
   
   
   /* TODO: garbage collection on failure */
@@ -168,6 +172,22 @@ public class Job
       physNode1.getLink().waitAck(msg2);
       
       port++;
+    }
+  }
+  
+  
+  public void start() throws Exception
+  {
+    Set<NodeProxy> pnodes = new HashSet<>(logNodeToPhysNode.values());
+    for (NodeProxy pnode: pnodes) {
+      ArrayList<Integer> lnodes = new ArrayList<>();
+      for (Entry<Integer, NodeProxy> lnpn: logNodeToPhysNode.entrySet()) {
+        if (pnode == lnpn.getValue())
+          lnodes.add(lnpn.getKey());
+      }
+      
+      CtrlMessage cmsg = new StartThreadMsg(lnodes);
+      pnode.getLink().sendMsg(cmsg);
     }
   }
 }

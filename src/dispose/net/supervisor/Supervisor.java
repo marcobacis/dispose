@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import dispose.log.DisposeLog;
 import dispose.net.common.Config;
 
 public class Supervisor implements Runnable
@@ -50,6 +51,7 @@ public class Supervisor implements Runnable
   
   synchronized public void createJob(Job j)
   {
+    DisposeLog.info(this, "created job ", j.getID());
     currentJobs.put(j.getID(), j);
   }
   

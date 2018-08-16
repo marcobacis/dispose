@@ -1,6 +1,7 @@
 package dispose.test;
 
 import java.net.InetAddress;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import dispose.client.ClientDag;
@@ -11,9 +12,10 @@ import dispose.client.Stream;
 import dispose.net.common.Config;
 import dispose.net.links.ObjectFifoLink;
 import dispose.net.links.SocketLink;
+import dispose.net.message.CreateJobMsg;
 import dispose.net.message.CtrlMessage;
-import dispose.net.message.InstantiateDagMsg;
-import dispose.net.message.StartThreadMsg;
+import dispose.net.message.JobCommandMsg;
+import dispose.net.message.JobCommandMsg.Command;
 import dispose.net.node.Node;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
@@ -53,11 +55,16 @@ public class ExampleJob
     Stream consumer = new FileConsumerStream("output.csv", a.join(4, d, b).apply(Op.MAX, 1));
     ClientDag compDag = ClientDag.derive(consumer);
     
-    CtrlMessage idmsg = new InstantiateDagMsg(compDag);
+    UUID jobid = UUID.randomUUID();
+    CtrlMessage newmsg = new CreateJobMsg(jobid, compDag);
+    localNode.getControlLink().sendMsgAndRequestAck(newmsg);
+    localNode.getControlLink().waitAck(newmsg);
+    
+    CtrlMessage idmsg = new JobCommandMsg(jobid, Command.START);
     localNode.getControlLink().sendMsgAndRequestAck(idmsg);
     localNode.getControlLink().waitAck(idmsg);
+    
     System.out.println("the dag has been instantiated!");
-    localNode.getControlLink().sendMsg(new StartThreadMsg());
     
     while (true) {
       TimeUnit.SECONDS.sleep(1);

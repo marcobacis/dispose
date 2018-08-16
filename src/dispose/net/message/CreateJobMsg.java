@@ -3,20 +3,21 @@ package dispose.net.message;
 import java.util.UUID;
 
 import dispose.client.ClientDag;
-import dispose.log.DisposeLog;
 import dispose.net.supervisor.Job;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 
-public class InstantiateDagMsg extends CtrlMessage
+public class CreateJobMsg extends CtrlMessage
 {
   private static final long serialVersionUID = 3594328279621054155L;
   private ClientDag dag;
+  private UUID jid;
   
   
-  public InstantiateDagMsg(ClientDag dag)
+  public CreateJobMsg(UUID jid, ClientDag dag)
   {
     this.dag = dag;
+    this.jid = jid;
   }
 
   
@@ -29,13 +30,7 @@ public class InstantiateDagMsg extends CtrlMessage
   
   private void instantiateDag(Supervisor supervis, NodeProxy nodem) throws Exception
   {
-    DisposeLog.debug(this, "InstantiateDag!!");
-    DisposeLog.debug(this, dag.toString());
-    
-    Job newjob = Job.jobFromClientDag(UUID.randomUUID(), dag, supervis, nodem);
+    Job newjob = Job.jobFromClientDag(jid, dag, supervis, nodem);
     supervis.createJob(newjob);
-    newjob.materialize();
-    
-    DisposeLog.info(this, "dag instantiated!");
   }
 }
