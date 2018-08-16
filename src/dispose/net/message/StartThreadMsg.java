@@ -1,6 +1,8 @@
 package dispose.net.message;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import dispose.net.node.ComputeThread;
@@ -11,9 +13,7 @@ import dispose.net.supervisor.Supervisor;
 public class StartThreadMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -2977267460391785421L;
-
-  private int opID = 0;
-  
+  private Set<Integer> threads;
   private boolean all = false;
   
   
@@ -25,19 +25,13 @@ public class StartThreadMsg extends CtrlMessage
   
   public StartThreadMsg(int id)
   {
-    this.opID = id;
+    this.threads = Collections.singleton(id);
   }
   
   
-  public boolean all()
+  public StartThreadMsg(Collection<Integer> threads)
   {
-    return this.all;
-  }
-  
-  
-  public int id()
-  {
-    return this.opID;
+    this.threads = new HashSet<>(threads);
   }
 
   
@@ -46,10 +40,10 @@ public class StartThreadMsg extends CtrlMessage
   {
     Set<Integer> ops;
     
-    if (all())
+    if (all)
       ops = node.getCurrentlyInstantiatedThreads();
     else
-      ops = Collections.singleton(id());
+      ops = threads;
     
     for (Integer opid: ops) {
       ComputeThread opthd = node.getComputeThread(opid);
