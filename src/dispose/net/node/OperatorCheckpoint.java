@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
 
+import dispose.net.common.DataAtom;
 import dispose.net.node.operators.Operator;
 
 public class OperatorCheckpoint implements Serializable
@@ -20,13 +21,19 @@ public class OperatorCheckpoint implements Serializable
 
   private int id;
   private Operator op;
-  private List<AtomsCache> outCaches;
+  private List<Queue<DataAtom>> inFlight;
+  private boolean[] checked;
   
-  public OperatorCheckpoint(int id, Operator operator, List<AtomsCache> caches)
+  public OperatorCheckpoint(int id, Operator operator)
   {
     this.id = id;
     this.op = operator;
-    this.outCaches = caches;
+    this.inFlight = new ArrayList<>(op.getNumInputs());
+    this.checked = new boolean[op.getNumInputs()];
+    for (int i = 0; i < op.getNumInputs(); i++) {
+      this.inFlight.add(new LinkedList<>());
+      this.checked[i] = false;
+    }
   }
   
   /**
@@ -84,14 +91,38 @@ public class OperatorCheckpoint implements Serializable
     return this.timestamp;
   }
   
-  public List<AtomsCache> getCaches()
+  public synchronized void addInFlightAtom(int idx, DataAtom atom)
   {
-    return this.outCaches;
+    inFlight.get(idx).offer(atom);
+  }
+  
+  public void notifyCheck(int idx)
+  {
+    this.checked[idx] = true;
+  }
+  
+  public boolean isComplete()
+  {
+    boolean completed = true;
+    for(boolean check : checked)
+      completed &= check;
+    
+    return completed;
+  }
+  
+  public synchronized List<Queue<DataAtom>> getInFlight()
+  {
+    return this.inFlight;
   }
   
   public Operator getOperator()
   {
     return this.op;
+  }
+  
+  public String toString()
+  {
+    return checked.toString() + ";" + inFlight.toString();
   }
   
 }

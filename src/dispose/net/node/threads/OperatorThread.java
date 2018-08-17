@@ -12,9 +12,10 @@ import dispose.net.common.types.*;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.MonitoredLink.Delegate;
+import dispose.net.message.ChkpMessage;
 import dispose.net.message.Message;
-import dispose.net.node.AtomsCache;
 import dispose.net.node.ComputeThread;
+import dispose.net.node.OperatorCheckpoint;
 import dispose.net.node.operators.Operator;
 
 
@@ -30,12 +31,12 @@ public class OperatorThread extends ComputeThread
   private List<MonitoredLink> inStreams = new ArrayList<>();
   private List<MonitoredLink> outStreams = new ArrayList<>();
 
-  private List<AtomsCache> outCaches = new ArrayList<>();
-
   private DataAtom[] inputAtoms;
 
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
 
+  private HashMap<Integer, OperatorCheckpoint> checkpoints = new HashMap<>();
+  
   private AtomicBoolean running = new AtomicBoolean(false);
 
   public OperatorThread(Operator operator)
@@ -60,7 +61,6 @@ public class OperatorThread extends ComputeThread
   public void addOutput(Link outputLink) throws IOException
   {
     this.outLinks.add(outputLink);
-    this.outCaches.add(new AtomsCache());
   }
 
 
@@ -102,6 +102,8 @@ public class OperatorThread extends ComputeThread
       if (msg instanceof DataAtom) {
         this.op.notifyElement(StreamIndex, ((DataAtom) msg));
         this.op.process();
+      } else if (msg instanceof ChkpMessage) {
+        this.op.notifyChkpMessage(StreamIndex, (ChkpMessage) msg);
       }
     }
 
@@ -135,10 +137,7 @@ public class OperatorThread extends ComputeThread
     @Override
     public void messageReceived(Message msg) throws Exception
     {
-      if (msg instanceof DataAtom) {
-        DataAtom atomAck = (DataAtom) msg;
-        this.op.notifyAck(this.idx, atomAck);
-      }
+      //do nothing, we don't expect messages from downstream
     }
 
 
@@ -172,7 +171,6 @@ public class OperatorThread extends ComputeThread
         new OperatorOutputDelegate(this, i)));
     }
 
-    assert (this.outCaches.size() == this.outStreams.size());
     assert (this.inStreams.size() == this.operator.getNumInputs());
 
     this.running.set(true);
@@ -185,20 +183,62 @@ public class OperatorThread extends ComputeThread
    * @param element The received atom */
   private void notifyElement(int idx, DataAtom element)
   {
-    if (element != null)
+    if (element != null) {
       this.inputQueues.get(idx).offer(element);
+      
+      //adds value to all current checkpoints
+      if(!checkpoints.isEmpty()) {
+        for(OperatorCheckpoint chkp : checkpoints.values()) {
+          if(!chkp.isComplete()) chkp.addInFlightAtom(idx, element);
+        }
+      }
+    }
   }
 
-
-  /** Performs the operations to deal with an ack received from downstreams
-   * operators
-   * @param idx The index of the output link from which the ack was received
-   * @param ack The ACKed atom */
-  private synchronized void notifyAck(int idx, DataAtom ack)
+  /**
+   * Perform the operations to deal with a checkpoint/snapshot message
+   * received from upstream
+   * @param idx The index of the input link from which the message was received
+   * @param msg The received message
+   */
+  private synchronized void notifyChkpMessage(int idx, ChkpMessage msg)
   {
-    this.outCaches.get(idx).acked(ack);
+        
+    OperatorCheckpoint current;
+    
+    int id = msg.getID();
+    
+    if(checkpoints.containsKey(id)) {
+      current = checkpoints.get(id);
+    } else {
+      current = new OperatorCheckpoint(id, this.operator);
+      checkpoints.put(id, current);
+      
+      //forwards checkpoint message to all downstream operators
+      try {
+        
+        for(MonitoredLink outLink : outStreams) {
+          outLink.sendMsg(msg);
+          DisposeLog.debug("Sent chkp from operator " + this.operator.getID());
+        }
+      } catch (Exception e) {
+        DisposeLog.error(this, "Exception while processing checkpoint message ", e.getMessage());
+        e.printStackTrace();
+      }
+      
+    }
+    
+    current.notifyCheck(idx);
+    
+    if(current.isComplete()) {
+      //TODO send checkpoint to the supervisor (through the node)
+      DisposeLog.debug(OperatorThread.class, "Checkpoint " + current.getID() + " completed on operator " + this.operator.getID() + ": " + current);
+      checkpoints.remove(id);
+    }
+    
+      
   }
-
+  
   /** Main loop of the thread. Gets the control commands and runs the operator
    * on each new data on the input link. */
   private void process()
@@ -218,14 +258,6 @@ public class OperatorThread extends ComputeThread
 
         // process the inputs
         List<DataAtom> result = this.operator.processAtom(inputAtoms);
-        
-        for(int i = 0; i < this.inStreams.size(); i++) {
-          DataAtom current = this.inputAtoms[i];
-          if(current != null && !(current instanceof NullData))
-              this.inStreams.get(i).sendMsg(current);
-        }
-        
-        DisposeLog.debug(OperatorThread.class, "Operator " + this.opID + " caching " + this.outCaches.get(0).getAtoms());
 
         // sends non-null results to all the children streams
         if (result.size() > 0) {
@@ -234,7 +266,6 @@ public class OperatorThread extends ComputeThread
               for (int idx = 0; idx < this.outStreams.size(); idx++) {
                 MonitoredLink out = this.outStreams.get(idx);
                 out.sendMsg(resAtom);
-                this.outCaches.get(idx).push(resAtom);
               }
             }
           }
