@@ -1,10 +1,8 @@
 package dispose.net.links;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
@@ -43,22 +41,34 @@ public class PipeLink implements Link
 
   
   @Override
-  public void sendMsg(Message message) throws IOException
+  public void sendMsg(Message message) throws LinkBrokenException
   {
-    this.outStream.writeObject(message);
-    this.outStream.flush();
+    try {
+      this.outStream.flush();
+      this.outStream.writeObject(message);
+    } catch (IOException e) {
+      throw new LinkBrokenException(e);
+    }
   }
 
 
   @Override
-  public Message recvMsg() throws IOException, ClassNotFoundException
+  public Message recvMsg() throws LinkBrokenException
   {
-    return (Message) this.inStream.readObject();
+    Message m;
+    
+    try {
+      m = (Message)this.inStream.readObject();
+    } catch (ClassNotFoundException | IOException e) {
+      throw new LinkBrokenException(e);
+    }
+    
+    return m;
   }
   
   
   @Override
-  public Message recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  public Message recvMsg(int timeoutms) throws LinkBrokenException
   {
     return recvMsg();
   }

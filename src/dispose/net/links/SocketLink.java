@@ -18,27 +18,25 @@ public class SocketLink implements Link
   ObjectInputStream inStream;
   ObjectOutputStream outStream;
   
-  /**
-   * Constructor. Takes the socket and derives the streams
+  /** Constructor. Takes the socket and derives the streams
    * @param sock    Socket to use
-   * @throws IOException
-   */
-  private SocketLink(Socket sock) throws IOException {
+   * @throws IOException */
+  private SocketLink(Socket sock) throws IOException
+  {
     this.sock = sock;
     this.outStream = new ObjectOutputStream(sock.getOutputStream());
     this.inStream = new ObjectInputStream(sock.getInputStream());
   }
   
-  /**
-   * Connects to the given host+port and returns the newly created link
+  
+  /** Connects to the given host+port and returns the newly created link
    * @param host    Host to connect to
    * @param port    Port to connect to
    * @return        The Link created from the connection
    * @throws UnknownHostException
-   * @throws IOException
-   */
-  public static SocketLink connectTo(String host, int port) throws UnknownHostException, IOException {
-
+   * @throws IOException */
+  public static SocketLink connectTo(String host, int port) throws UnknownHostException, IOException
+  {
     Socket sock = new Socket(host, port);
 
     DisposeLog.info(SocketLink.class, "Connected at " + host + " port " + port);
@@ -46,14 +44,12 @@ public class SocketLink implements Link
     return new SocketLink(sock);
   }
   
-  /**
-   * Accepts any new connections on the given port and returns the corresponding link
+  /** Accepts any new connections on the given port and returns the corresponding link
    * @param port    Port on which to accept connections
    * @return        The Link created from the connection
-   * @throws IOException
-   */
-  public static SocketLink connectFrom(int port) throws IOException {
-    
+   * @throws IOException */
+  public static SocketLink connectFrom(int port) throws IOException
+  {
     DisposeLog.info(SocketLink.class, "Waiting on port " + port);
     ServerSocket server = new ServerSocket(port);
     
@@ -68,29 +64,37 @@ public class SocketLink implements Link
   
   
   @Override
-  public void sendMsg(Message message) throws IOException
+  public void sendMsg(Message message) throws LinkBrokenException
   {
-    this.outStream.writeObject(message);
-    this.outStream.flush();
+    try {
+      this.outStream.writeObject(message);
+      this.outStream.flush();
+    } catch (IOException e) {
+      close();
+      throw new LinkBrokenException(e);
+    }
   }
   
   
   @Override
-  public Message recvMsg(int timeoutms) throws IOException, ClassNotFoundException
+  public Message recvMsg(int timeoutms) throws LinkBrokenException
   {
     Message res;
-    this.sock.setSoTimeout(timeoutms);
     try {
+      this.sock.setSoTimeout(timeoutms);
       res = (Message)this.inStream.readObject();
     } catch (SocketTimeoutException e) {
       res = null;
+    } catch (IOException | ClassNotFoundException e1) {
+      close();
+      throw new LinkBrokenException(e1);
     }
     return res;
   }
 
 
   @Override
-  public Message recvMsg() throws IOException, ClassNotFoundException
+  public Message recvMsg() throws LinkBrokenException
   {
     return recvMsg(0);
   }

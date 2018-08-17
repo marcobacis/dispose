@@ -20,25 +20,40 @@ public class ObjectFifoLink implements Link
   
   
   @Override
-  public void sendMsg(Message message) throws InterruptedException
+  public void sendMsg(Message message) throws LinkBrokenException
   {
-    toOther.put(message);
+    try {
+      toOther.put(message);
+    } catch (InterruptedException e) {
+      close();
+      throw new LinkBrokenException(e);
+    }
   }
 
 
   @Override
-  public Message recvMsg() throws InterruptedException
+  public Message recvMsg() throws LinkBrokenException
   {
-    return fromOther.take();
+    return recvMsg(0);
   }
 
 
   @Override
-  public Message recvMsg(int timeoutms) throws InterruptedException
+  public Message recvMsg(int timeoutms) throws LinkBrokenException
   {
-    if (timeoutms == 0)
-      return fromOther.take();
-    return fromOther.poll(timeoutms, TimeUnit.MILLISECONDS);
+    Message msg;
+
+    try {
+      if (timeoutms == 0)
+        msg = fromOther.take();
+      else
+        msg = fromOther.poll(timeoutms, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      close();
+      throw new LinkBrokenException(e);
+    }
+    
+    return msg;
   }
 
 
