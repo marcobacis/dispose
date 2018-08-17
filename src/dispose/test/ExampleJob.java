@@ -5,14 +5,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import dispose.client.ClientDag;
-import dispose.client.FileConsumerStream;
-import dispose.client.FileProducerStream;
 import dispose.client.Op;
 import dispose.client.Stream;
+import dispose.client.consumer.StdOutConsumerStream;
+import dispose.client.producer.RandomProducerStream;
 import dispose.log.DisposeLog;
-import dispose.log.LogEmitter;
-import dispose.log.LogPriority;
-import dispose.log.StdoutLogEmitter;
 import dispose.net.common.Config;
 import dispose.net.links.ObjectFifoLink;
 import dispose.net.links.SocketLink;
@@ -52,11 +49,11 @@ public class ExampleJob
       nodeThread.start();
     }
     
-    Stream source = new FileProducerStream("ciao.csv");
+    Stream source = new RandomProducerStream();
     Stream a = source.apply(Op.MAX, 5);
     Stream b = source.apply(Op.AVG, 5);
     Stream d = b.join(3, source.apply(Op.MIN, 5)).apply(Op.MIN, 4);
-    Stream consumer = new FileConsumerStream("output.csv", a.join(4, d).apply(Op.MAX, 1));
+    Stream consumer = new StdOutConsumerStream(a.join(4, d).apply(Op.MAX, 1));
     ClientDag compDag = ClientDag.derive(consumer);
     
     UUID jobid = UUID.randomUUID();

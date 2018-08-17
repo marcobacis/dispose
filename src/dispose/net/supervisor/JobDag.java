@@ -11,8 +11,8 @@ import dispose.client.ClientDag;
 import dispose.client.Op;
 import dispose.client.Stream;
 import dispose.net.node.ComputeNode;
-import dispose.net.node.datasinks.ObjectLogDataSink;
-import dispose.net.node.datasources.RandomFloatDataSrc;
+import dispose.net.node.datasinks.SinkFactory;
+import dispose.net.node.datasources.SourceFactory;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.JoinOperator;
 import dispose.net.node.operators.MaxWindowOperator;
@@ -64,9 +64,9 @@ public class JobDag
       ComputeNode logNode;
       
       if (dag.isSource(stream)) {
-        logNode = new RandomFloatDataSrc(stream.getID(), 1000);
+        logNode = SourceFactory.getFromStream(stream);
       } else if (dag.isSink(stream)) {
-        logNode = new ObjectLogDataSink(stream.getID());
+        logNode = SinkFactory.getFromStream(stream);
       } else {
         Op operation = stream.getOperation();
         switch (operation) {

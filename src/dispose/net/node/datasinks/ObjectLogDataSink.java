@@ -43,4 +43,16 @@ public class ObjectLogDataSink implements DataSink
     return true;
   }
 
+  @Override
+  public void end()
+  {
+    // nothing to do here
+  }
+
+  @Override
+  public void setUp()
+  {
+    //nothing to do here
+  }
+  
 }

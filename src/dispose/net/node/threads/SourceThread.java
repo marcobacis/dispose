@@ -58,6 +58,9 @@ public class SourceThread extends ComputeThread
   private void mainLoop()
   {
     try {
+      
+      dataSource.setUp();
+      
       while (running.get()) {
         DataAtom d = dataSource.nextAtom();
         for (Link link: outStreams) {

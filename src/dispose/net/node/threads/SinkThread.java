@@ -49,6 +49,8 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
     for (MonitoredLink ml: inStreams) {
       ml.close();
     }
+    
+    dataSink.end();
   }
 
 
@@ -60,6 +62,8 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
       thd.setName("data-sink-" + Integer.toString(opID) + "-" + Integer.toHexString(ml.hashCode()));
       thd.start();
     }
+    
+    dataSink.setUp();
   }
 
 

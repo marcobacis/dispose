@@ -27,6 +27,8 @@ public class Stream implements Serializable
   
   protected int windowSlide;
   
+  protected List<String> params = new ArrayList<>();
+  
   /**
    * Enumerator class used to assign a unique id (integer)
    * to every new stream.
@@ -200,7 +202,9 @@ public class Stream implements Serializable
                                .map(parent -> Integer.toString(parent.getID()))
                                .collect(Collectors.joining(",")) + ")";
     
-    return new String("(" + String.join(";", id, op, win, slide, parentsID, childrensID) + ")");
+    String paramsString = String.join(";", this.params);
+    
+    return new String("(" + String.join(";", id, op, win, slide, paramsString, parentsID, childrensID) + ")");
     
   }
   
