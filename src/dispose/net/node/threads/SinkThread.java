@@ -8,6 +8,7 @@ import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
+import dispose.net.message.ChkpMessage;
 import dispose.net.message.Message;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.datasinks.DataSink;
@@ -65,10 +66,14 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   @Override
   public void messageReceived(Message msg) throws Exception
   {
-    DataAtom da = (DataAtom)msg;
-    dataSink.processAtom(da);
-    //TODO send back a ACK to the downstream operator (need to know from which stream this msg came)
-    this.inStreams.get(0).sendMsg(da); //quickfix assuming only one stream just for testing... FIXME!
+    if(msg instanceof DataAtom) {
+      DataAtom da = (DataAtom)msg;
+      dataSink.processAtom(da);
+    } else if(msg instanceof ChkpMessage) {
+      //TODO handle checkpoint end
+      ChkpMessage chkp = (ChkpMessage) msg;
+      DisposeLog.debug(SinkThread.class, "Completed checkpoint " + chkp.getID());
+    }
   }
 
 

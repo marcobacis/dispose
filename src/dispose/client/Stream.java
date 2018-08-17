@@ -111,6 +111,10 @@ public class Stream implements Serializable
    * @return            A new stream representing the joined streams
    */
   public Stream join(int window, Stream... streams) {
+    
+    if(streams.length > 1)
+      throw new IllegalArgumentException("Only 2-streams joins are supported right now");
+    
     Stream[] parents = new Stream[streams.length+1];
     
     parents[0] = this;

@@ -9,6 +9,10 @@ import dispose.client.FileConsumerStream;
 import dispose.client.FileProducerStream;
 import dispose.client.Op;
 import dispose.client.Stream;
+import dispose.log.DisposeLog;
+import dispose.log.LogEmitter;
+import dispose.log.LogPriority;
+import dispose.log.StdoutLogEmitter;
 import dispose.net.common.Config;
 import dispose.net.links.ObjectFifoLink;
 import dispose.net.links.SocketLink;
@@ -52,7 +56,7 @@ public class ExampleJob
     Stream a = source.apply(Op.MAX, 5);
     Stream b = source.apply(Op.AVG, 5);
     Stream d = b.join(3, source.apply(Op.MIN, 5)).apply(Op.MIN, 4);
-    Stream consumer = new FileConsumerStream("output.csv", a.join(4, d, b).apply(Op.MAX, 1));
+    Stream consumer = new FileConsumerStream("output.csv", a.join(4, d).apply(Op.MAX, 1));
     ClientDag compDag = ClientDag.derive(consumer);
     
     UUID jobid = UUID.randomUUID();
@@ -64,7 +68,8 @@ public class ExampleJob
     localNode.getControlLink().sendMsgAndRequestAck(idmsg);
     localNode.getControlLink().waitAck(idmsg);
     
-    System.out.println("the dag has been instantiated!");
+    DisposeLog.info(ExampleJob.class, "the dag has been instantiated!");
+    DisposeLog.debug(ExampleJob.class, compDag);
     
     while (true) {
       TimeUnit.SECONDS.sleep(1);
