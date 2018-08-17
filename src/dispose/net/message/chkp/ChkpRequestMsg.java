@@ -1,8 +1,11 @@
-package dispose.net.message;
+package dispose.net.message.chkp;
 
 import java.util.UUID;
 
-public class ChkpMessage extends Message
+import dispose.net.message.CtrlMessage;
+import dispose.net.node.Node;
+
+public class ChkpRequestMsg extends CtrlMessage
 {
 
   private static final long serialVersionUID = -6339978017034829113L;
@@ -10,7 +13,7 @@ public class ChkpMessage extends Message
   
   private int chkpId;
   
-  public ChkpMessage(int id)
+  public ChkpRequestMsg(int id)
   {
     this.chkpId = id;
   }
@@ -25,5 +28,12 @@ public class ChkpMessage extends Message
   {
     return uuid;
   }
+  
+  @Override
+  public void executeOnNode(Node node) throws Exception
+  {
+    node.injectIntoSource(this);
+  }
+  
 
 }

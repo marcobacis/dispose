@@ -7,7 +7,12 @@ import dispose.net.links.Link;
 public abstract class ComputeThread
 {
   protected int opID;
+  protected Node owner;
   
+  public ComputeThread(Node owner)
+  {
+    this.owner = owner;
+  }
   
   /**
    * Adds an input link to get the atoms from

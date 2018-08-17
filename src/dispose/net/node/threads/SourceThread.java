@@ -8,7 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
+import dispose.net.message.Message;
 import dispose.net.node.ComputeThread;
+import dispose.net.node.Node;
 import dispose.net.node.datasources.DataSource;
 
 public class SourceThread extends ComputeThread
@@ -17,9 +19,11 @@ public class SourceThread extends ComputeThread
   private List<Link> outStreams = new ArrayList<>();
   private AtomicBoolean running = new AtomicBoolean(true);
   
+  private Object injectLock = new Object();
   
-  public SourceThread(DataSource dataSource)
+  public SourceThread(Node owner, DataSource dataSource)
   {
+    super(owner);
     this.dataSource = dataSource;
     this.opID = dataSource.getID();
   }
@@ -62,9 +66,11 @@ public class SourceThread extends ComputeThread
       dataSource.setUp();
       
       while (running.get()) {
-        DataAtom d = dataSource.nextAtom();
-        for (Link link: outStreams) {
-          link.sendMsg(d);
+        synchronized (injectLock) {
+          DataAtom d = dataSource.nextAtom();
+          for (Link link: outStreams) {
+            link.sendMsg(d);
+          }
         }
       }
     } catch (Exception e) {
@@ -72,4 +78,14 @@ public class SourceThread extends ComputeThread
       e.printStackTrace();
     }
   }
+  
+  public void injectMessage(Message toInject)
+  {
+    synchronized (injectLock) {
+      for (Link link: outStreams) {
+        link.sendMsg(toInject);
+      }
+    }
+  }
+  
 }

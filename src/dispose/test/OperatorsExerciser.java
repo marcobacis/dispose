@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import dispose.net.common.types.FloatData;
 import dispose.net.links.PipeLink;
+import dispose.net.node.Node;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.MaxWindowOperator;
 import dispose.net.node.operators.Operator;
@@ -33,9 +34,11 @@ public class OperatorsExerciser
     Operator max = new MaxWindowOperator(1, 3, 1);
     
     Operator avg = new AvgWindowOperator(2, 2, 2);
+    
+    Node node = new Node(null);
    
-    OperatorThread maxWrapper = new OperatorThread(max);
-    OperatorThread avgWrapper = new OperatorThread(avg);
+    OperatorThread maxWrapper = new OperatorThread(node, max);
+    OperatorThread avgWrapper = new OperatorThread(node, avg);
     
     maxWrapper.addInput(hostMax);
     maxWrapper.addOutput(maxAvgA);

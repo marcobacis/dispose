@@ -12,9 +12,11 @@ import dispose.net.common.types.*;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.MonitoredLink.Delegate;
-import dispose.net.message.ChkpMessage;
 import dispose.net.message.Message;
+import dispose.net.message.chkp.ChkpRequestMsg;
+import dispose.net.message.chkp.ChkpResponseMsg;
 import dispose.net.node.ComputeThread;
+import dispose.net.node.Node;
 import dispose.net.node.OperatorCheckpoint;
 import dispose.net.node.operators.Operator;
 
@@ -39,8 +41,9 @@ public class OperatorThread extends ComputeThread
   
   private AtomicBoolean running = new AtomicBoolean(false);
 
-  public OperatorThread(Operator operator)
+  public OperatorThread(Node owner, Operator operator)
   {
+    super(owner);
     this.operator = operator;
     this.opID = operator.getID();
   }
@@ -102,8 +105,8 @@ public class OperatorThread extends ComputeThread
       if (msg instanceof DataAtom) {
         this.op.notifyElement(StreamIndex, ((DataAtom) msg));
         this.op.process();
-      } else if (msg instanceof ChkpMessage) {
-        this.op.notifyChkpMessage(StreamIndex, (ChkpMessage) msg);
+      } else if (msg instanceof ChkpRequestMsg) {
+        this.op.notifyChkpMessage(StreamIndex, (ChkpRequestMsg) msg);
       }
     }
 
@@ -201,7 +204,7 @@ public class OperatorThread extends ComputeThread
    * @param idx The index of the input link from which the message was received
    * @param msg The received message
    */
-  private synchronized void notifyChkpMessage(int idx, ChkpMessage msg)
+  private synchronized void notifyChkpMessage(int idx, ChkpRequestMsg msg)
   {
         
     OperatorCheckpoint current;
@@ -219,7 +222,7 @@ public class OperatorThread extends ComputeThread
         
         for(MonitoredLink outLink : outStreams) {
           outLink.sendMsg(msg);
-          DisposeLog.debug("Sent chkp from operator " + this.operator.getID());
+          DisposeLog.debug("Forwarded Checkpoint request from operator " + this.operator.getID());
         }
       } catch (Exception e) {
         DisposeLog.error(this, "Exception while processing checkpoint message ", e.getMessage());
@@ -231,8 +234,10 @@ public class OperatorThread extends ComputeThread
     current.notifyCheck(idx);
     
     if(current.isComplete()) {
-      //TODO send checkpoint to the supervisor (through the node)
       DisposeLog.debug(OperatorThread.class, "Checkpoint " + current.getID() + " completed on operator " + this.operator.getID() + ": " + current);
+      
+      owner.sendMsgToSupervisor(getID(), new ChkpResponseMsg(current));
+      
       checkpoints.remove(id);
     }
     

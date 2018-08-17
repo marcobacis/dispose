@@ -49,7 +49,7 @@ public class RandomFloatDataSrc implements DataSource
         TimeUnit.MILLISECONDS.sleep(throttle);
       } catch (InterruptedException e) { /* who cares */ }
     }
-    return new FloatData(7.0);//rng.nextDouble());
+    return new FloatData(rng.nextDouble());
   }
 
 

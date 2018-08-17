@@ -19,7 +19,7 @@ public class DeployDataSinkThreadMsg extends CtrlMessage
   @Override
   public void executeOnNode(Node node) throws Exception
   {
-    SinkThread dst = new SinkThread(dataSink);
+    SinkThread dst = new SinkThread(node, dataSink);
     node.addComputeThread(dst.getID(), dst);
   }
 }

@@ -26,7 +26,7 @@ public class DeployOperatorThreadMsg extends CtrlMessage
   public void executeOnNode(Node node) throws Exception
   {
     Operator op = getOperator();
-    OperatorThread opthd = new OperatorThread(op);
+    OperatorThread opthd = new OperatorThread(node, op);
     node.addComputeThread(op.getID(), opthd);
   }
 }

@@ -1,5 +1,6 @@
 package dispose.net.node;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.Message;
+import dispose.net.node.threads.SourceThread;
 
 
 public class Node implements Runnable, MonitoredLink.Delegate
@@ -78,4 +80,27 @@ public class Node implements Runnable, MonitoredLink.Delegate
     System.out.println("link down in node");
     e.printStackTrace();
   }
+  
+  public synchronized void sendMsgToSupervisor(int opID, Message msg)
+  {
+    try {
+      this.ctrlLink.sendMsg(msg);
+    } catch (Exception e) {
+      linkIsBroken(e);
+    }
+  }
+  
+  public void injectIntoSource(Message toInject)
+  {
+    //first, check if there is a source here (at most one)
+    Collection<ComputeThread> threads = operators.values();
+    
+    for(ComputeThread thread : threads) {
+      if(thread instanceof SourceThread) {
+        ((SourceThread) thread).injectMessage(toInject);
+        return;
+      }
+    }
+  }
+  
 }
