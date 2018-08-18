@@ -47,14 +47,14 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   @Override
   public void pause()
   {
-    running.set(false);
-    for (MonitoredLink ml: inStreams) {
-      ml.close();
-    }
-    
-    dataSink.end();
+    running.set(false); 
   }
-
+  
+  @Override
+  public void resume()
+  {
+    running.set(true);
+  }
 
   @Override
   public void start()
@@ -68,6 +68,15 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
     dataSink.setUp();
   }
 
+  @Override
+  public void stop()
+  {
+    for (MonitoredLink ml: inStreams) {
+      ml.close();
+    }
+    
+    dataSink.end();
+  }
 
   @Override
   public void messageReceived(Message msg) throws Exception

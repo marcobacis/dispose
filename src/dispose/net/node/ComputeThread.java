@@ -33,14 +33,25 @@ public abstract class ComputeThread
   
   
   /**
-   * Sets the current cycle of the thread as the last one
+   * Pauses the computation thread
    */
   public abstract void pause();
   
+  /**
+   * Resumes the computation thread
+   */
+  public abstract void resume();
   
+  /**
+   * Starts the computation thread
+   */
   public abstract void start();
-    
   
+  /**
+   * Sets this cycle as the last one, then stops the computation
+   */
+  public abstract void stop();
+    
   /**
    * Returns the operator's id in the job's dag
    * @return the operator id

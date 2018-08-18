@@ -17,7 +17,8 @@ public class SourceThread extends ComputeThread
 {
   private DataSource dataSource;
   private List<Link> outStreams = new ArrayList<>();
-  private AtomicBoolean running = new AtomicBoolean(true);
+  private AtomicBoolean running = new AtomicBoolean(false);
+  private AtomicBoolean paused = new AtomicBoolean(false);
   
   private Object injectLock = new Object();
   
@@ -46,18 +47,36 @@ public class SourceThread extends ComputeThread
   @Override
   public void pause()
   {
-    running.set(false);
+    paused.set(true);
   }
 
+  public void resume()
+  {
+    paused.set(false);
+    synchronized(paused) {
+      paused.notify();
+    }
+  }
 
   @Override
   public void start()
   {
+    running.set(true);
     Thread thd = new Thread(() -> mainLoop());
     thd.setName("data-source-" + Integer.toString(getID()));
     thd.start();
   }
   
+  @Override
+  public void stop()
+  {
+    running.set(false);
+    
+    for(Link link : outStreams)
+      link.close();
+    
+    dataSource.end();
+  }
   
   private void mainLoop()
   {
@@ -65,7 +84,17 @@ public class SourceThread extends ComputeThread
       
       dataSource.setUp();
       
-      while (running.get()) {
+      while (true) {
+        if(running.get() == false) return;
+        
+        if(paused.get()) {
+          synchronized(paused) {
+            while(paused.get()) {
+                paused.wait();
+            }
+          }
+        }
+        
         synchronized (injectLock) {
           DataAtom d = dataSource.nextAtom();
           for (Link link: outStreams) {
