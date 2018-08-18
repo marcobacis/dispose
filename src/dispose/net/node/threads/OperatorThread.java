@@ -55,8 +55,7 @@ public class OperatorThread extends ComputeThread
    * @param inputLink Input link to use
    * @param fromId ID of the upstream operator connected through this link
    * @throws IOException */
-  public synchronized void setInputLink(Link inputLink, int fromId)
-    throws IOException
+  public synchronized void setInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
 
     boolean repair = inStreams.containsKey(fromId);
@@ -82,8 +81,7 @@ public class OperatorThread extends ComputeThread
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
    * @throws IOException */
-  public synchronized void setOutputLink(Link outputLink, int toId)
-    throws IOException
+  public synchronized void setOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
     if (outStreams.containsKey(toId)) {
       outStreams.get(toId).close();
@@ -111,9 +109,8 @@ public class OperatorThread extends ComputeThread
 
 
     @Override
-    public void messageReceived(Message msg) throws Exception
+    public void messageReceived(Message msg)
     {
-
       if (msg instanceof DataAtom) {
         this.op.notifyElement(StreamIndex, ((DataAtom) msg));
         this.op.process();
@@ -147,7 +144,7 @@ public class OperatorThread extends ComputeThread
 
 
     @Override
-    public void messageReceived(Message msg) throws Exception
+    public void messageReceived(Message msg)
     {
       // do nothing, we don't expect messages from downstream
     }

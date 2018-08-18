@@ -30,7 +30,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   
   
   @Override
-  public void setInputLink(Link inputLink, int fromId) throws Exception
+  public void setInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
     MonitoredLink monlink = new MonitoredLink(inputLink, this);
     inStreams.add(monlink);
@@ -38,9 +38,9 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
 
 
   @Override
-  public void setOutputLink(Link outputLink, int toId) throws Exception
+  public void setOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
-    throw new Exception("this is a data --> SINK <--");
+    throw new ClosedEndException("this is a data --> SINK <--");
   }
 
 
@@ -79,7 +79,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   }
 
   @Override
-  public void messageReceived(Message msg) throws Exception
+  public void messageReceived(Message msg)
   {
     if(msg instanceof DataAtom) {
       DataAtom da = (DataAtom)msg;

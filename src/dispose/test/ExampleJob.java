@@ -25,7 +25,7 @@ public class ExampleJob
 {
   public static void main(String[] args) throws Exception
   {
-    boolean remoteSupervisor = true;
+    boolean remoteSupervisor = false;
     Node localNode;
     
     if (!remoteSupervisor) {

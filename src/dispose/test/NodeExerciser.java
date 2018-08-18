@@ -1,7 +1,5 @@
 package dispose.test;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 import dispose.net.links.ObjectFifoLink;
@@ -23,7 +21,7 @@ import dispose.net.node.operators.Operator;
 
 public class NodeExerciser
 {
-  public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException
+  public static void main(String[] args) throws Exception
   {
     ObjectFifoLink ctrl0A = new ObjectFifoLink();
     ObjectFifoLink ctrl0B = new ObjectFifoLink();

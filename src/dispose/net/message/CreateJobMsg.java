@@ -22,15 +22,13 @@ public class CreateJobMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
-    instantiateDag(supervis, nodem);
-  }
-  
-  
-  private void instantiateDag(Supervisor supervis, NodeProxy nodem) throws Exception
-  {
-    Job newjob = Job.jobFromClientDag(jid, dag, supervis, nodem);
-    supervis.createJob(newjob);
+    try {
+      Job newjob = Job.jobFromClientDag(jid, dag, supervis, nodem);
+      supervis.createJob(newjob);
+    } catch (Exception e) {
+      throw new MessageFailureException(e);
+    }
   }
 }

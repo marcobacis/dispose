@@ -1,7 +1,7 @@
 
 package dispose.net.links;
 
-public class LinkBrokenException extends RuntimeException
+public class LinkBrokenException extends Exception
 {
   private static final long serialVersionUID = 6390625057043022915L;
 

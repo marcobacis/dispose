@@ -1,5 +1,6 @@
 package dispose.net.message;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import dispose.log.DisposeLog;
@@ -7,6 +8,7 @@ import dispose.net.common.Config;
 import dispose.net.links.SocketLink;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
+import dispose.net.node.threads.ClosedEndException;
 
 public class ConnectRemoteThreadsMsg extends CtrlMessage
 {
@@ -59,50 +61,77 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node) throws MessageFailureException
   {
     ComputeThread toop = node.getComputeThread(getTo());
     ComputeThread fromop = node.getComputeThread(getFrom());
     
     if (toop != null && fromop != null) {
-      throw new Exception("Both operators are instantiated in the same node");
+      throw new MessageFailureException("Both operators are instantiated in the same node");
+    }
+    
+    if (toop == null && fromop == null) {
+      throw new MessageFailureException("Operators " + Integer.toString(from) + " and " 
+          + Integer.toString(to) + " both don't exist here!");
     }
     
     if (toop != null) {
-      SocketLink link = SocketLink.connectFrom(port());
-      toop.setInputLink(link, getFrom());
-      return;
+      setupAcceptSide(toop);
+    } else {
+      setupConnectSide(fromop);
     }
+  }
+  
+  
+  public void setupAcceptSide(ComputeThread toop) throws MessageFailureException
+  {
+    SocketLink link;
+    try {
+      link = SocketLink.connectFrom(port());
+      toop.setInputLink(link, getFrom());
+    } catch (IOException | ClosedEndException e) {
+      throw new MessageFailureException(e);
+    }
+  }
+  
+  
+  public void setupConnectSide(ComputeThread fromop) throws MessageFailureException
+  {
+    SocketLink link = null;
+    boolean success = false;
+    int attemptsLeft = 5;
     
-    if (fromop != null) {
-      SocketLink link = null;
-      boolean success = false;
-      int attemptsLeft = 5;
+    while (!success && attemptsLeft > 0) {
+      DisposeLog.info(this, "connection attempt to ", this.host, "; left ", attemptsLeft);
       
-      while (!success && attemptsLeft > 0) {
-        DisposeLog.info(this, "connection attempt to ", this.host, "; left ", attemptsLeft);
-        try {
-          link = SocketLink.connectTo(getRemoteHost(), port());
-          success = true;
-        } catch (Exception e) {
-          DisposeLog.info(this, "failed");
-          attemptsLeft--;
-          if (attemptsLeft > 0) {
-            DisposeLog.info(this, "will retry in a while");
+      try {
+        link = SocketLink.connectTo(getRemoteHost(), port());
+        success = true;
+        
+      } catch (Exception e) {
+        DisposeLog.info(this, "failed");
+        attemptsLeft--;
+        
+        if (attemptsLeft > 0) {
+          DisposeLog.info(this, "will retry in a while");
+          try {
             TimeUnit.SECONDS.sleep(1);
+          } catch (InterruptedException e1) {
+            throw new MessageFailureException(e1);
           }
         }
       }
-      
-      if (success && link != null)
-        fromop.setOutputLink(link, getTo());
-      else
-        throw new Exception("connection failed");
-      return;
     }
     
-    throw new Exception("Operators " + Integer.toString(from) + " and " 
-          + Integer.toString(to) + " both don't exist here!");
+    if (!success || link == null) {
+      throw new MessageFailureException("connection failed");
+    }
+    
+    try {
+      fromop.setOutputLink(link, getTo());
+    } catch (ClosedEndException e) {
+      throw new MessageFailureException(e);
+    }
   }
   
 }

@@ -28,20 +28,18 @@ public class JobCommandMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
-  {
-    instantiateDag(supervis, nodem);
-  }
-  
-  
-  private void instantiateDag(Supervisor supervis, NodeProxy nodem) throws Exception
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
     Job job = supervis.getJob(jid);
     
     switch (cmd) {
       case START:
-        job.materialize();
-        job.start();
+        try {
+          job.materialize();
+          job.start();
+        } catch (Exception e) {
+          throw new MessageFailureException(e);
+        }
         break;
       case STOP:
         break;

@@ -18,7 +18,7 @@ public class LogMsg extends CtrlMessage
   
 
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node)
   {
     DisposeLog.info(this, "[", origin, "] ", message);
   }

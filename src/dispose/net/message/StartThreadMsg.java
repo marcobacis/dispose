@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import dispose.net.links.LinkBrokenException;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
 import dispose.net.supervisor.NodeProxy;
@@ -36,7 +37,7 @@ public class StartThreadMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node) throws MessageFailureException
   {
     Set<Integer> ops;
     
@@ -53,11 +54,15 @@ public class StartThreadMsg extends CtrlMessage
   
   
   @Override
-  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
     Set<NodeProxy> nodes = supervis.getNodes();
     for (NodeProxy node: nodes) {
-      node.getLink().sendMsg(this);
+      try {
+        node.getLink().sendMsg(this);
+      } catch (LinkBrokenException e) {
+        throw new MessageFailureException(e);
+      }
     }
   }
 }

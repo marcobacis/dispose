@@ -11,6 +11,7 @@ import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.Message;
+import dispose.net.message.MessageFailureException;
 import dispose.net.node.threads.SourceThread;
 
 
@@ -35,7 +36,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   
   
   @Override
-  public void messageReceived(Message msg) throws Exception
+  public void messageReceived(Message msg) throws MessageFailureException
   {
     //TODO handle errors on the supervisor link (and on the creation of operator links)
     CtrlMessage cmsg = (CtrlMessage)msg;

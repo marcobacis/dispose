@@ -1,13 +1,13 @@
 package dispose.net.node.threads;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
-import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
+import dispose.net.links.LinkBrokenException;
 import dispose.net.message.Message;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
@@ -19,8 +19,8 @@ public class SourceThread extends ComputeThread
   private List<Link> outStreams = new ArrayList<>();
   private AtomicBoolean running = new AtomicBoolean(false);
   private AtomicBoolean paused = new AtomicBoolean(false);
+  private LinkedBlockingQueue<Message> injectQueue = new LinkedBlockingQueue<>();
   
-  private Object injectLock = new Object();
   
   public SourceThread(Node owner, DataSource dataSource)
   {
@@ -31,14 +31,14 @@ public class SourceThread extends ComputeThread
   
   
   @Override
-  public void setInputLink(Link inputLink, int fromId) throws Exception
+  public void setInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
-    throw new Exception("this is a data --> SOURCE <--");
+    throw new ClosedEndException("this is a data --> SOURCE <--");
   }
 
 
   @Override
-  public void setOutputLink(Link outputLink, int toId) throws IOException
+  public void setOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
     outStreams.add(outputLink);
   }
@@ -81,28 +81,32 @@ public class SourceThread extends ComputeThread
   private void mainLoop()
   {
     try {
-      
       dataSource.setUp();
       
       while (true) {
-        if(running.get() == false) return;
+        if(running.get() == false)
+          return;
         
         if(paused.get()) {
           synchronized(paused) {
             while(paused.get()) {
+              try {
                 paused.wait();
+              } catch (InterruptedException e) {
+                return;
+              }
             }
           }
         }
         
-        synchronized (injectLock) {
-          DataAtom d = dataSource.nextAtom();
-          for (Link link: outStreams) {
-            link.sendMsg(d);
-          }
+        Message d = injectQueue.poll();
+        if (d == null)
+          d = dataSource.nextAtom();
+        for (Link link: outStreams) {
+          link.sendMsg(d);
         }
       }
-    } catch (Exception e) {
+    } catch (LinkBrokenException e) {
       DisposeLog.error(this, "oh oh we've lost the link \\OwO/");
       e.printStackTrace();
     }
@@ -110,11 +114,7 @@ public class SourceThread extends ComputeThread
   
   public void injectMessage(Message toInject)
   {
-    synchronized (injectLock) {
-      for (Link link: outStreams) {
-        link.sendMsg(toInject);
-      }
-    }
+    injectQueue.offer(toInject);
   }
   
 }

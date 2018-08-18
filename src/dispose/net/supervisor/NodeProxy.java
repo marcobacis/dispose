@@ -6,6 +6,7 @@ import dispose.net.links.SocketLink;
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.LogMsg;
 import dispose.net.message.Message;
+import dispose.net.message.MessageFailureException;
 
 public class NodeProxy implements MonitoredLink.Delegate
 {
@@ -40,7 +41,7 @@ public class NodeProxy implements MonitoredLink.Delegate
 
 
   @Override
-  public void messageReceived(Message msg) throws Exception
+  public void messageReceived(Message msg) throws MessageFailureException
   {
     CtrlMessage cmsg = (CtrlMessage)msg;
     cmsg.executeOnSupervisor(owner, this);

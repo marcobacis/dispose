@@ -1,6 +1,5 @@
 package dispose.net.links;
 
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -8,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import dispose.net.message.Message;
+import dispose.net.message.MessageFailureException;
 
 public class MonitoredLink
 {
@@ -27,7 +27,7 @@ public class MonitoredLink
   
   public interface Delegate
   {
-    public void messageReceived(Message msg) throws Exception;
+    public void messageReceived(Message msg) throws MessageFailureException;
     public void linkIsBroken(Exception e);
   }
   
@@ -85,12 +85,9 @@ public class MonitoredLink
           
         }
       }
-    } catch (SocketException e) {
+    } catch (LinkBrokenException e) {
       if (!intentionallyClosed)
         delegate.linkIsBroken(e);
-      _close();
-    } catch (Exception e) {
-      delegate.linkIsBroken(e);
       _close();
     }
   }
@@ -102,7 +99,7 @@ public class MonitoredLink
       delegate.messageReceived(msg);
       if (sendAck)
         sendMsg(new AckMsg(msg.getUUID()));
-    } catch (Exception e) {
+    } catch (MessageFailureException | LinkBrokenException e) {
       e.printStackTrace();
       _close();
     }
@@ -116,19 +113,19 @@ public class MonitoredLink
   }
   
   
-  public void sendMsg(Message message) throws Exception
+  public void sendMsg(Message message) throws LinkBrokenException
   {
     link.sendMsg(message);
   }
   
   
-  public synchronized void sendMsgAndRequestAck(Message message) throws Exception
+  public synchronized void sendMsgAndRequestAck(Message message) throws LinkBrokenException
   {
     sendMsgAndRequestAck(message, AckType.PROCESSING);
   }
   
   
-  public synchronized void sendMsgAndRequestAck(Message message, AckType type) throws Exception
+  public synchronized void sendMsgAndRequestAck(Message message, AckType type) throws LinkBrokenException
   {
     AckRequestMsg ackmsg = new AckRequestMsg(message, type);
     ackStatus.put(message.getUUID(), false);
@@ -136,24 +133,29 @@ public class MonitoredLink
   }
   
   
-  public synchronized void waitAck(Message sentMessage) throws Exception
+  public synchronized void waitAck(Message sentMessage) throws LinkBrokenException, NotAcknowledgeableException
   {
+    if (ackStatus == null)
+      throw new LinkBrokenException("closed link");
+    
     UUID waituuid = sentMessage.getUUID();
-    if (waituuid == null)
-      throw new Exception("message not previously sent with sendMsgAndRequestAck");
+    if (ackStatus.get(waituuid) == null)
+      throw new NotAcknowledgeableException("message not previously sent with sendMsgAndRequestAck");
     
     while (ackStatus != null && ackStatus.get(waituuid) == false) {
       try {
         wait();
       } catch (InterruptedException e) {
-        // usually never happens
-        e.printStackTrace();
+        delegate.linkIsBroken(e);
+        _close();
+        throw new LinkBrokenException(e);
       }
     }
-    ackStatus.remove(waituuid);
     
     if (ackStatus == null)
-      throw new Exception("the node is down!");
+      throw new LinkBrokenException("the node is down!");
+    else
+      ackStatus.remove(waituuid);
   }
   
   

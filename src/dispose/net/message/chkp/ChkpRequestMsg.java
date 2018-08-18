@@ -30,7 +30,7 @@ public class ChkpRequestMsg extends CtrlMessage
   }
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node)
   {
     node.injectIntoSource(this);
   }

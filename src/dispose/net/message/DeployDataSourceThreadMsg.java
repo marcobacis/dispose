@@ -17,7 +17,7 @@ public class DeployDataSourceThreadMsg extends CtrlMessage
   
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node)
   {
     SourceThread dst = new SourceThread(node, dataSource);
     node.addComputeThread(dst.getID(), dst);

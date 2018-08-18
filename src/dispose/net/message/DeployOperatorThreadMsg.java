@@ -23,7 +23,7 @@ public class DeployOperatorThreadMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node)
   {
     Operator op = getOperator();
     OperatorThread opthd = new OperatorThread(node, op);

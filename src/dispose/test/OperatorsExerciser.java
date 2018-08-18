@@ -1,7 +1,5 @@
 package dispose.test;
 
-import java.io.IOException;
-
 import dispose.net.common.types.FloatData;
 import dispose.net.links.PipeLink;
 import dispose.net.node.Node;
@@ -14,7 +12,7 @@ import dispose.net.node.threads.OperatorThread;
 public class OperatorsExerciser
 {
   
-  public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException
+  public static void main(String[] args) throws Exception
   {
 
     PipeLink to = new PipeLink();

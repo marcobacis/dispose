@@ -15,20 +15,20 @@ public class CtrlMessage extends Message
   /** Performs the action associated with the control message on the specified
    * node.
    * @param node The node who received the message. 
-   * @throws Exception Causes the failure of the node. */
-  public void executeOnNode(Node node) throws Exception
+   * @throws MessageFailureException Causes the failure of the node. */
+  public void executeOnNode(Node node) throws MessageFailureException
   {
-    throw new Exception("message " + this.getClass().toString() + " not to be sent to a node");
+    throw new MessageFailureException("message " + this.getClass().toString() + " not to be sent to a node");
   }
   
   
   /** Performs the action associated with the control message on the specified
    * supervisor.
    * @param node The supervisor who received the message. 
-   * @throws Exception Causes the failure of the supervisor. */
-  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws Exception
+   * @throws MessageFailureException Causes the failure of the supervisor. */
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
-    throw new Exception("message " + this.getClass().toString() + " not to be sent to a supervisor");
+    throw new MessageFailureException("message " + this.getClass().toString() + " not to be sent to a supervisor");
   }
   
   

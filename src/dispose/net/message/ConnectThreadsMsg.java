@@ -2,6 +2,7 @@ package dispose.net.message;
 
 import dispose.net.links.ObjectFifoLink;
 import dispose.net.node.Node;
+import dispose.net.node.threads.ClosedEndException;
 
 public class ConnectThreadsMsg extends CtrlMessage
 {
@@ -31,14 +32,18 @@ public class ConnectThreadsMsg extends CtrlMessage
 
   
   @Override
-  public void executeOnNode(Node node) throws Exception
+  public void executeOnNode(Node node) throws MessageFailureException
   {
     ObjectFifoLink pipeLinkA = new ObjectFifoLink();
     ObjectFifoLink pipeLinkB = new ObjectFifoLink();
     pipeLinkA.connect(pipeLinkB);
     
-    node.getComputeThread(getFrom()).setOutputLink(pipeLinkA, getTo());
-    node.getComputeThread(getTo()).setInputLink(pipeLinkB, getFrom());
+    try {
+      node.getComputeThread(getFrom()).setOutputLink(pipeLinkA, getTo());
+      node.getComputeThread(getTo()).setInputLink(pipeLinkB, getFrom());
+    } catch (ClosedEndException e) {
+      throw new MessageFailureException(e);
+    }
   }
 
 }

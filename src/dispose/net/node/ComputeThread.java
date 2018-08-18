@@ -1,8 +1,7 @@
 package dispose.net.node;
 
-import java.io.IOException;
-
 import dispose.net.links.Link;
+import dispose.net.node.threads.ClosedEndException;
 
 public abstract class ComputeThread
 {
@@ -18,18 +17,18 @@ public abstract class ComputeThread
    * Adds an input link to get the atoms from
    * @param inputLink   Input link to use
    * @param fromId TODO
-   * @throws IOException
+   * @throws ClosedEndException if the thread cannot accept inputs
    */
-  public abstract void setInputLink(Link inputLink, int fromId) throws Exception;
+  public abstract void setInputLink(Link inputLink, int fromId) throws ClosedEndException;
   
   
   /**
    * Adds an output link (there can be many) to write the results to
    * @param outputLink  The output link to use
    * @param toId TODO
-   * @throws IOException
+   * @throws ClosedEndException if the thread cannot accept outputs
    */
-  public abstract void setOutputLink(Link outputLink, int toId) throws Exception;
+  public abstract void setOutputLink(Link outputLink, int toId) throws ClosedEndException;
   
   
   /**
