@@ -40,11 +40,11 @@ public class OperatorsExerciser
     OperatorThread maxWrapper = new OperatorThread(node, max);
     OperatorThread avgWrapper = new OperatorThread(node, avg);
     
-    maxWrapper.addInput(hostMax);
-    maxWrapper.addOutput(maxAvgA);
+    maxWrapper.setInputLink(hostMax, 0);
+    maxWrapper.setOutputLink(maxAvgA, avg.getID());
     
-    avgWrapper.addInput(maxAvgB);
-    avgWrapper.addOutput(avgHost);
+    avgWrapper.setInputLink(maxAvgB, max.getID());
+    avgWrapper.setOutputLink(avgHost, 0);
     
     maxWrapper.start();
     avgWrapper.start();

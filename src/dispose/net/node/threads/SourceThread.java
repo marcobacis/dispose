@@ -30,14 +30,14 @@ public class SourceThread extends ComputeThread
   
   
   @Override
-  public void addInput(Link inputLink) throws Exception
+  public void setInputLink(Link inputLink, int fromId) throws Exception
   {
     throw new Exception("this is a data --> SOURCE <--");
   }
 
 
   @Override
-  public void addOutput(Link outputLink) throws IOException
+  public void setOutputLink(Link outputLink, int toId) throws IOException
   {
     outStreams.add(outputLink);
   }

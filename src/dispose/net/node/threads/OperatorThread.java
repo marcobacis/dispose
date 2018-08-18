@@ -27,12 +27,13 @@ public class OperatorThread extends ComputeThread
 {
   private Operator operator;
 
-  private List<Link> inLinks = new ArrayList<>();
-  private List<Link> outLinks = new ArrayList<>();
-
-  private List<MonitoredLink> inStreams = new ArrayList<>();
-  private List<MonitoredLink> outStreams = new ArrayList<>();
-
+  private HashMap<Integer, MonitoredLink> inStreams = new HashMap<>();
+  private HashMap<Integer, MonitoredLink> outStreams = new HashMap<>();
+  
+  HashMap<Integer, Integer> opIDtoLinkIdx = new HashMap<>();
+  
+  private int lastInputIdx = 0;
+  
   private DataAtom[] inputAtoms;
 
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
@@ -49,21 +50,46 @@ public class OperatorThread extends ComputeThread
   }
 
 
-  /** Adds an input link to get the atoms from
-   * @param inputLink Input link to use
+  /** Set the input link for the given operator id
+   * @param inputLink   Input link to use
+   * @param fromId      ID of the upstream operator connected through this link
    * @throws IOException */
-  public void addInput(Link inputLink) throws IOException
+  public synchronized void setInputLink(Link inputLink, int fromId) throws IOException
   {
-    this.inLinks.add(inputLink);
+    
+    boolean repair = inStreams.containsKey(fromId);
+    
+    Integer idx = lastInputIdx;
+    
+    if(repair) {
+      inStreams.get(fromId).close();
+      inStreams.remove(fromId);
+    } else {
+      opIDtoLinkIdx.put(fromId, lastInputIdx);
+      lastInputIdx++;
+    }
+    
+    idx = opIDtoLinkIdx.get(fromId);
+    
+    inStreams.put(fromId, MonitoredLink.asyncMonitorLink(inputLink,
+      new OperatorInputDelegate(this, idx)));
+    
+    
   }
 
 
-  /** Adds an output link (there can be many) to write the results to
-   * @param outputLink The output link to use
+  /** Set the output link (there can be many) for the given downstream operator
+   * @param outputLink  The output link to use
+   * @param toId        The ID of the downstream operator connected through the link
    * @throws IOException */
-  public void addOutput(Link outputLink) throws IOException
+  public synchronized void setOutputLink(Link outputLink, int toId) throws IOException
   {
-    this.outLinks.add(outputLink);
+    if(outStreams.containsKey(toId)) {
+      outStreams.get(toId).close();
+      outStreams.remove(toId);
+    }
+    
+    outStreams.put(toId, MonitoredLink.asyncMonitorLink(outputLink, new OperatorOutputDelegate(this)));
   }
 
 
@@ -127,13 +153,11 @@ public class OperatorThread extends ComputeThread
   {
 
     private OperatorThread op;
-    private int idx;
 
 
-    public OperatorOutputDelegate(OperatorThread op, int idx)
+    public OperatorOutputDelegate(OperatorThread op)
     {
       this.op = op;
-      this.idx = idx;
     }
 
 
@@ -156,25 +180,17 @@ public class OperatorThread extends ComputeThread
   /** Starts the operator, by starting all the links monitors and queues */
   public void start()
   {
-    this.inputAtoms = new DataAtom[this.inLinks.size()];
-    this.inputQueues = new ArrayList<>(this.inLinks.size());
+    int numInputs = operator.getNumInputs();
+    
+    inputAtoms = new DataAtom[numInputs];
+    inputQueues = new ArrayList<>(numInputs);
 
-    for (int d = 0; d < this.inLinks.size(); d++) {
+    for (int d = 0; d < numInputs; d++) {
       inputAtoms[d] = new NullData();
-      this.inputQueues.add(new ConcurrentLinkedQueue<>());
+      inputQueues.add(new ConcurrentLinkedQueue<>());
     }
 
-    for (int i = 0; i < this.inLinks.size(); i++) {
-      this.inStreams.add(MonitoredLink.asyncMonitorLink(this.inLinks.get(i),
-        new OperatorInputDelegate(this, i)));
-    }
-
-    for (int i = 0; i < this.outLinks.size(); i++) {
-      this.outStreams.add(MonitoredLink.asyncMonitorLink(this.outLinks.get(i),
-        new OperatorOutputDelegate(this, i)));
-    }
-
-    assert (this.inStreams.size() == this.operator.getNumInputs());
+    assert (numInputs == operator.getNumInputs());
 
     this.running.set(true);
   }
@@ -220,7 +236,7 @@ public class OperatorThread extends ComputeThread
       //forwards checkpoint message to all downstream operators
       try {
         
-        for(MonitoredLink outLink : outStreams) {
+        for(MonitoredLink outLink : outStreams.values()) {
           outLink.sendMsg(msg);
           DisposeLog.debug("Forwarded Checkpoint request from operator " + this.operator.getID());
         }
@@ -268,8 +284,7 @@ public class OperatorThread extends ComputeThread
         if (result.size() > 0) {
           for (DataAtom resAtom : result) {
             if (resAtom != null && !(resAtom instanceof NullData)) {
-              for (int idx = 0; idx < this.outStreams.size(); idx++) {
-                MonitoredLink out = this.outStreams.get(idx);
+              for (MonitoredLink out : outStreams.values()) {
                 out.sendMsg(resAtom);
               }
             }

@@ -37,8 +37,8 @@ public class ConnectThreadsMsg extends CtrlMessage
     ObjectFifoLink pipeLinkB = new ObjectFifoLink();
     pipeLinkA.connect(pipeLinkB);
     
-    node.getComputeThread(getFrom()).addOutput(pipeLinkA);
-    node.getComputeThread(getTo()).addInput(pipeLinkB);
+    node.getComputeThread(getFrom()).setOutputLink(pipeLinkA, getTo());
+    node.getComputeThread(getTo()).setInputLink(pipeLinkB, getFrom());
   }
 
 }

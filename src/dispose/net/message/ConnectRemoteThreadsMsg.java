@@ -70,7 +70,7 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
     
     if (toop != null) {
       SocketLink link = SocketLink.connectFrom(port());
-      toop.addInput(link);
+      toop.setInputLink(link, getFrom());
       return;
     }
     
@@ -95,7 +95,7 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
       }
       
       if (success && link != null)
-        fromop.addOutput(link);
+        fromop.setOutputLink(link, getTo());
       else
         throw new Exception("connection failed");
       return;
