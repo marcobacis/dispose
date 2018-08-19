@@ -28,13 +28,17 @@ public class OperatorThread extends ComputeThread
   private Operator operator;
 
   private HashMap<Integer, MonitoredLink> inStreams = new HashMap<>();
-  private HashMap<Integer, MonitoredLink> outStreams = new HashMap<>();
+  private OperatorBroadcast outLink = new OperatorBroadcast();
 
   HashMap<Integer, Integer> opIDtoLinkIdx = new HashMap<>();
 
   private int lastInputIdx = 0;
 
   private DataAtom[] inputAtoms;
+  
+  private Boolean[] readyAtoms;
+  
+  private Boolean[] endAtoms;
 
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
 
@@ -76,21 +80,15 @@ public class OperatorThread extends ComputeThread
       new OperatorInputDelegate(this, idx)));
   }
 
-
   /** Set the output link (there can be many) for the given downstream operator
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
    * @throws IOException */
   public synchronized void setOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
-    if (outStreams.containsKey(toId)) {
-      outStreams.get(toId).close();
-      outStreams.remove(toId);
-    }
-
-    outStreams.put(toId, MonitoredLink.asyncMonitorLink(outputLink,
-      new OperatorOutputDelegate(this)));
+    outLink.setOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
   }
+  
 
 
   /** Input links delegate, responsible for asynchronously receiving DataAtoms
@@ -113,7 +111,6 @@ public class OperatorThread extends ComputeThread
     {
       if (msg instanceof DataAtom) {
         this.op.notifyElement(StreamIndex, ((DataAtom) msg));
-        this.op.process();
       } else if (msg instanceof ChkpRequestMsg) {
         this.op.notifyChkpMessage(StreamIndex, (ChkpRequestMsg) msg);
       }
@@ -166,16 +163,24 @@ public class OperatorThread extends ComputeThread
     int numInputs = operator.getNumInputs();
 
     inputAtoms = new DataAtom[numInputs];
+    readyAtoms = new Boolean[numInputs];
+    endAtoms = new Boolean[numInputs];
     inputQueues = new ArrayList<>(numInputs);
 
     for (int d = 0; d < numInputs; d++) {
       inputAtoms[d] = new NullData();
       inputQueues.add(new ConcurrentLinkedQueue<>());
+      readyAtoms[d] = false;
+      endAtoms[d] = false;
     }
 
     assert (numInputs == operator.getNumInputs());
 
     this.running.set(true);
+    
+    Thread processThread = new Thread(() -> process());
+    processThread.start();
+    
   }
 
 
@@ -194,6 +199,9 @@ public class OperatorThread extends ComputeThread
   public void resume()
   {
     this.running.set(true);
+    
+    Thread processThread = new Thread(() -> process());
+    processThread.start();
   }
 
 
@@ -204,9 +212,8 @@ public class OperatorThread extends ComputeThread
 
     for (MonitoredLink inLink : inStreams.values())
       inLink.close();
-
-    for (MonitoredLink outLink : outStreams.values())
-      outLink.close();
+    
+    outLink.close();
   }
 
 
@@ -249,12 +256,7 @@ public class OperatorThread extends ComputeThread
 
       // forwards checkpoint message to all downstream operators
       try {
-
-        for (MonitoredLink outLink : outStreams.values()) {
           outLink.sendMsg(msg);
-          DisposeLog.debug("Forwarded Checkpoint request from operator "
-                           + this.operator.getID());
-        }
       } catch (Exception e) {
         DisposeLog.error(this, "Exception while processing checkpoint message ",
           e.getMessage());
@@ -279,35 +281,70 @@ public class OperatorThread extends ComputeThread
   }
 
 
+  private boolean stopCondition()
+  {
+    boolean stopCondition = true;
+    for(Boolean end : endAtoms)
+      stopCondition &= end;
+    
+    return stopCondition;
+  }
+  
+  private boolean processCondition()
+  {
+    boolean condition = true;
+    for(Boolean ready : readyAtoms)
+      condition &= ready;
+    
+    return condition;
+  }
+  
   /** Main loop of the thread. Gets the control commands and runs the operator
    * on each new data on the input link. */
   private void process()
   {
-    if (this.running.get()) {
+    while (this.running.get()) {
       // I/O processing
       try {
-
-        // grabs inputs from the queues
-        for (int i = 0; i < this.inputAtoms.length; i++) {
-          DataAtom inAtom = this.inputQueues.get(i).poll();
-          if (inAtom != null)
-            inputAtoms[i] = inAtom;
-          else
-            inputAtoms[i] = new NullData();
-        }
-
-        // process the inputs
-        List<DataAtom> result = this.operator.processAtom(inputAtoms);
-
-        // sends non-null results to all the children streams
-        if (result.size() > 0) {
-          for (DataAtom resAtom : result) {
-            if (resAtom != null && !(resAtom instanceof NullData)) {
-              for (MonitoredLink out : outStreams.values()) {
-                out.sendMsg(resAtom);
+        
+        //fills the inputAtoms array
+        for (int i = 0; i < inputAtoms.length; i++) {
+          if (!readyAtoms[i]) {
+            DataAtom inAtom = inputQueues.get(i).peek();
+            if (inAtom != null && !(inAtom instanceof NullData)) {
+              if (inAtom instanceof FloatData) {
+                inputAtoms[i] = inAtom;
+              } else if (inAtom instanceof EndData) {
+                inputAtoms[i] = new NullData();
+                endAtoms[i] = true;
               }
+              readyAtoms[i] = true;
+              inputQueues.get(i).remove();
             }
           }
+        }
+        
+        if (stopCondition()) {
+          stop();
+        
+        } else if (processCondition()) {
+          // process the inputs
+          List<DataAtom> result = this.operator.processAtom(inputAtoms);
+
+          // sends non-null results to all the children streams
+            for (DataAtom resAtom : result) {
+              if (resAtom != null && !(resAtom instanceof NullData)) {
+                outLink.sendMsg(resAtom);
+              }
+          }
+
+          for (int j = 0; j < inputAtoms.length; j++) {
+            if (!endAtoms[j]) {
+              readyAtoms[j] = false;
+              inputAtoms[j] = new NullData();
+            }
+          }
+          
         }
 
       } catch (Exception e) {
@@ -316,5 +353,4 @@ public class OperatorThread extends ComputeThread
       }
     }
   }
-
 }
