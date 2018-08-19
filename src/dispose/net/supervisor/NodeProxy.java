@@ -1,5 +1,7 @@
 package dispose.net.supervisor;
 
+import dispose.log.DisposeLog;
+import dispose.net.common.Config;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.SocketLink;
@@ -21,7 +23,7 @@ public class NodeProxy implements MonitoredLink.Delegate
   {
     this.owner = owner;
     this.networkAddress = networkAddress;
-    this.link = MonitoredLink.asyncMonitorLink(link, this);
+    this.link = MonitoredLink.asyncMonitorLink(link, this, Config.heartbeatPeriod * 2);
     this.link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
   }
   
@@ -51,7 +53,7 @@ public class NodeProxy implements MonitoredLink.Delegate
   @Override
   public void linkIsBroken(Exception e)
   {
-    e.printStackTrace();
+    DisposeLog.critical(this, "node @ ", networkAddress, " unavailable; exc = ", e != null ? e : "timeout");
     owner.removeNode(this);
     link = null;
   }

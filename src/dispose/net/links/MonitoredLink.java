@@ -2,10 +2,13 @@ package dispose.net.links;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import dispose.log.DisposeLog;
 import dispose.net.message.Message;
 import dispose.net.message.MessageFailureException;
 
@@ -16,6 +19,8 @@ public class MonitoredLink
   private boolean intentionallyClosed = false;
   private Map<UUID, Boolean> ackStatus = new HashMap<>();
   private ExecutorService msgExecutor;
+  private Timer heartbeatTimer;
+  private int timeout = 0;
   
   
   public enum AckType
@@ -28,6 +33,11 @@ public class MonitoredLink
   public interface Delegate
   {
     public void messageReceived(Message msg) throws MessageFailureException;
+    
+    /** Method called by MonitoredLink when the link being monitored is no longer
+     * working.
+     * @param e The exception which caused the link to break or null if the timeout
+     * expired.*/
     public void linkIsBroken(Exception e);
   }
   
@@ -39,16 +49,18 @@ public class MonitoredLink
   }
   
   
-  public static void syncMonitorLink(Link link, Delegate delegate)
+  public static void syncMonitorLink(Link link, Delegate delegate, int timeout)
   {
     MonitoredLink mlink = new MonitoredLink(link, delegate);
+    mlink.setTimeoutPeriod(timeout);
     mlink.monitorSynchronously();
   }
   
   
-  public static MonitoredLink asyncMonitorLink(Link link, Delegate delegate)
+  public static MonitoredLink asyncMonitorLink(Link link, Delegate delegate, int timeout)
   {
     MonitoredLink mlink = new MonitoredLink(link, delegate);
+    mlink.setTimeoutPeriod(timeout);
     Thread thd = new Thread(() -> mlink.monitorSynchronously());
     thd.setName("link-monitor-" + Integer.toHexString(mlink.hashCode()));
     thd.start();
@@ -62,9 +74,14 @@ public class MonitoredLink
     
     try {
       while (true) {
-        Message m = link.recvMsg(0);
+        Message m = link.recvMsg(timeout);
+        if (m == null)
+          break;
         
-        if (m instanceof AckRequestMsg) {
+        if (m instanceof HeartbeatMsg) {
+          DisposeLog.info(this, "heartbeat from ", link);
+          
+        } else if (m instanceof AckRequestMsg) {
           AckRequestMsg ackreq = (AckRequestMsg) m;
           Message realm = ackreq.getMessage();
           
@@ -85,6 +102,9 @@ public class MonitoredLink
           
         }
       }
+      
+      delegate.linkIsBroken(null);
+      _close();
     } catch (LinkBrokenException e) {
       if (!intentionallyClosed)
         delegate.linkIsBroken(e);
@@ -168,9 +188,47 @@ public class MonitoredLink
   
   private synchronized void _close()
   {
+    setHeartbeatSendPeriod(Integer.MAX_VALUE);
     link.close();
     ackStatus = null;
     notifyAll();
     msgExecutor.shutdown();
+  }
+  
+  
+  private class HeartbeatTask extends TimerTask
+  {
+    MonitoredLink parent;
+    
+    @Override
+    public void run()
+    {
+      parent.msgExecutor.submit(() -> {
+        try {
+          parent.sendMsg(new HeartbeatMsg());
+        } catch (LinkBrokenException e) { }
+      });
+    }
+  }
+  
+  
+  public synchronized void setHeartbeatSendPeriod(int msec)
+  {
+    if (heartbeatTimer != null) {
+      heartbeatTimer.cancel();
+    }
+    if (msec == Integer.MAX_VALUE) {
+      return;
+    }
+    HeartbeatTask hbt = new HeartbeatTask();
+    hbt.parent = this;
+    heartbeatTimer = new Timer("heartbeat-" + Integer.toHexString(hashCode()));
+    heartbeatTimer.schedule(hbt, 10, msec);
+  }
+  
+  
+  public synchronized void setTimeoutPeriod(int msec)
+  {
+    this.timeout = msec; 
   }
 }

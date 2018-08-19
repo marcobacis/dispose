@@ -72,8 +72,7 @@ public class OperatorThread extends ComputeThread
 
     idx = opIDtoLinkIdx.get(fromId);
 
-    inStreams.put(fromId, MonitoredLink.asyncMonitorLink(inputLink,
-      new OperatorInputDelegate(this, idx)));
+    inStreams.put(fromId, MonitoredLink.asyncMonitorLink(inputLink, new OperatorInputDelegate(this, idx), 0));
   }
 
   

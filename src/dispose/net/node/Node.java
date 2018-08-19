@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import dispose.log.DisposeLog;
+import dispose.net.common.Config;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
@@ -26,6 +27,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   {
     operators = new HashMap<>();
     this.ctrlLink = new MonitoredLink(ctrlLink, this);
+    this.ctrlLink.setHeartbeatSendPeriod(Config.heartbeatPeriod);
   }
 
   
@@ -79,7 +81,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   @Override
   public void linkIsBroken(Exception e)
   {
-    DisposeLog.critical(this, "control link down in node; exc = ", e);
+    DisposeLog.critical(this, "control link down in node; exc = ", e != null ? e : "timeout");
     teardown();
   }
   
