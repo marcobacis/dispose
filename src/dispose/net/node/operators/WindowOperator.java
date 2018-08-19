@@ -6,6 +6,7 @@ import java.util.List;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.TypeSet;
+import dispose.net.common.types.NullData;
 
 public abstract class WindowOperator implements Operator, Serializable
 {
@@ -81,10 +82,10 @@ public abstract class WindowOperator implements Operator, Serializable
     assert(input.length == this.windows.size());
 
     boolean ready = false;
-
+    
     //updates windows
     for(int i = 0; i < this.inputs; i++) {
-      if(input[i] != null && input[i] instanceof DataAtom) {
+      if(input[i] != null && !(input[i] instanceof NullData)) {
         this.windows.get(i).push(input[i]);
         this.newElems.set(i, this.newElems.get(i) + 1);
         ready |= this.windows.get(i).ready();
@@ -100,7 +101,7 @@ public abstract class WindowOperator implements Operator, Serializable
       //reset new elements for ready windows
       for(int w = 0; w < inputs; w++) {
         if(this.windows.get(w).ready()) {
-          this.newElems.set(w,0);
+          this.newElems.set(w, 0);
           this.windows.get(w).move();
         }
       }
