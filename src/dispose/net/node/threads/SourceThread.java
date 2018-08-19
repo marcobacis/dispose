@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
+import dispose.net.common.types.EndData;
 import dispose.net.links.Link;
 import dispose.net.links.LinkBrokenException;
 import dispose.net.message.Message;
@@ -104,6 +105,10 @@ public class SourceThread extends ComputeThread
           d = dataSource.nextAtom();
         for (Link link: outStreams) {
           link.sendMsg(d);
+        }
+        
+        if(d instanceof EndData) {
+          stop();
         }
       }
     } catch (LinkBrokenException e) {

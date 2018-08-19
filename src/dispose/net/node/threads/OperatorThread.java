@@ -34,11 +34,7 @@ public class OperatorThread extends ComputeThread
 
   private int lastInputIdx = 0;
 
-  private DataAtom[] inputAtoms;
-  
-  private Boolean[] readyAtoms;
-  
-  private Boolean[] endAtoms;
+  private OperatorInputState barrier;
 
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
 
@@ -162,19 +158,14 @@ public class OperatorThread extends ComputeThread
   {
     int numInputs = operator.getNumInputs();
 
-    inputAtoms = new DataAtom[numInputs];
-    readyAtoms = new Boolean[numInputs];
-    endAtoms = new Boolean[numInputs];
+    
     inputQueues = new ArrayList<>(numInputs);
 
     for (int d = 0; d < numInputs; d++) {
-      inputAtoms[d] = new NullData();
       inputQueues.add(new ConcurrentLinkedQueue<>());
-      readyAtoms[d] = false;
-      endAtoms[d] = false;
     }
-
-    assert (numInputs == operator.getNumInputs());
+    
+    barrier = new OperatorInputState(inputQueues);
 
     this.running.set(true);
     
@@ -225,6 +216,9 @@ public class OperatorThread extends ComputeThread
   {
     if (element != null) {
       this.inputQueues.get(idx).offer(element);
+      synchronized (barrier) {
+        barrier.notify();
+      }
 
       // adds value to all current checkpoints
       if (!checkpoints.isEmpty()) {
@@ -251,7 +245,7 @@ public class OperatorThread extends ComputeThread
     if (checkpoints.containsKey(id)) {
       current = checkpoints.get(id);
     } else {
-      current = new OperatorCheckpoint(id, this.operator);
+      current = new OperatorCheckpoint(id, operator, barrier);
       checkpoints.put(id, current);
 
       // forwards checkpoint message to all downstream operators
@@ -280,24 +274,6 @@ public class OperatorThread extends ComputeThread
 
   }
 
-
-  private boolean stopCondition()
-  {
-    boolean stopCondition = true;
-    for(Boolean end : endAtoms)
-      stopCondition &= end;
-    
-    return stopCondition;
-  }
-  
-  private boolean processCondition()
-  {
-    boolean condition = true;
-    for(Boolean ready : readyAtoms)
-      condition &= ready;
-    
-    return condition;
-  }
   
   /** Main loop of the thread. Gets the control commands and runs the operator
    * on each new data on the input link. */
@@ -307,27 +283,13 @@ public class OperatorThread extends ComputeThread
       // I/O processing
       try {
         
-        //fills the inputAtoms array
-        for (int i = 0; i < inputAtoms.length; i++) {
-          if (!readyAtoms[i]) {
-            DataAtom inAtom = inputQueues.get(i).peek();
-            if (inAtom != null && !(inAtom instanceof NullData)) {
-              if (inAtom instanceof FloatData) {
-                inputAtoms[i] = inAtom;
-              } else if (inAtom instanceof EndData) {
-                inputAtoms[i] = new NullData();
-                endAtoms[i] = true;
-              }
-              readyAtoms[i] = true;
-              inputQueues.get(i).remove();
-            }
-          }
-        }
+        DataAtom[] inputAtoms = barrier.recvAtomsBlocking();
         
-        if (stopCondition()) {
+        if (barrier.stopCondition()) {
+          outLink.sendMsg(new EndData());
           stop();
-        
-        } else if (processCondition()) {
+          
+        } else if (barrier.processCondition()) {
           // process the inputs
           List<DataAtom> result = this.operator.processAtom(inputAtoms);
 
@@ -338,12 +300,7 @@ public class OperatorThread extends ComputeThread
               }
           }
 
-          for (int j = 0; j < inputAtoms.length; j++) {
-            if (!endAtoms[j]) {
-              readyAtoms[j] = false;
-              inputAtoms[j] = new NullData();
-            }
-          }
+          barrier.resetAfterProcessing();
           
         }
 

@@ -2,42 +2,32 @@ package dispose.net.node.datasources;
 
 import java.io.*;
 
+import dispose.client.producer.FileProducerStream;
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.EndData;
 import dispose.net.common.types.FloatData;
 
-public class FileDataSource implements DataSource
+public class FileDataSource extends AbstractDataSource
 {
 
   private static final long serialVersionUID = -7965858251778817607L;
-  private int id;
-  private int clock = 0;
   
   private String path;
   private BufferedReader inStream;
   
-  public FileDataSource(int id, String path)
+  public FileDataSource(FileProducerStream stream)
   {
-    this.id = id;
-    this.path = path;
+    this(stream.getID(), stream.getFilePath());
   }
   
-  @Override
-  public int getID()
+  public FileDataSource(int id, String path)
   {
-    return id;
+    super(id);
+    this.path = path;
   }
 
-
   @Override
-  public int clock()
-  {
-    return clock;
-  }
-
-
-  @Override
-  public DataAtom nextAtom()
+  public DataAtom getNextAtom()
   {
     String line;
     try {

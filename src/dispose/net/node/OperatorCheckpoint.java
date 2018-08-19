@@ -10,6 +10,7 @@ import java.util.*;
 
 import dispose.net.common.DataAtom;
 import dispose.net.node.operators.Operator;
+import dispose.net.node.threads.OperatorInputState;
 
 public class OperatorCheckpoint implements Serializable
 {
@@ -22,12 +23,14 @@ public class OperatorCheckpoint implements Serializable
   private int id;
   private Operator op;
   private List<Queue<DataAtom>> inFlight;
+  private OperatorInputState inputState;
   private boolean[] checked;
   
-  public OperatorCheckpoint(int id, Operator operator)
+  public OperatorCheckpoint(int id, Operator operator, OperatorInputState inputState)
   {
     this.id = id;
     this.op = operator;
+    this.inputState = inputState;
     this.inFlight = new ArrayList<>(op.getNumInputs());
     this.checked = new boolean[op.getNumInputs()];
     for (int i = 0; i < op.getNumInputs(); i++) {
@@ -110,19 +113,19 @@ public class OperatorCheckpoint implements Serializable
     return completed;
   }
   
+  public OperatorInputState getInputState()
+  {
+    return inputState;
+  }
+  
   public synchronized List<Queue<DataAtom>> getInFlight()
   {
-    return this.inFlight;
+    return inFlight;
   }
   
   public Operator getOperator()
   {
-    return this.op;
-  }
-  
-  public String toString()
-  {
-    return checked.toString() + ";" + inFlight.toString();
+    return op;
   }
   
 }

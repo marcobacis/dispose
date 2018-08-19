@@ -1,54 +1,29 @@
 package dispose.net.node.datasources;
 
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.FloatData;
 
-public class RandomFloatDataSrc implements DataSource
+public class RandomFloatDataSrc extends AbstractDataSource
 {
   private static final long serialVersionUID = -3962038698442920907L;
-  private int throttle;
-  private int id;
-  private int clock = 0;
   private transient Random rng;
   
   
   public RandomFloatDataSrc(int id, int throttlems)
   {
-    this.id = id;
-    this.throttle = throttlems;
+    super(id, throttlems);
   }
   
   
   @Override
-  public int getID()
+  public DataAtom getNextAtom()
   {
-    return id;
-  }
-
-
-  @Override
-  public int clock()
-  {
-    return this.clock;
-  }
-
-
-  @Override
-  public DataAtom nextAtom()
-  {
-    clock++;
     
     if (rng == null)
       rng = new Random();
     
-    if (throttle > 0) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(throttle);
-      } catch (InterruptedException e) { /* who cares */ }
-    }
     return new FloatData(rng.nextInt(2));
   }
 
@@ -72,4 +47,5 @@ public class RandomFloatDataSrc implements DataSource
   {
     //nothing to do here
   }
+
 }

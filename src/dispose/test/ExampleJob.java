@@ -9,6 +9,7 @@ import dispose.client.Op;
 import dispose.client.Stream;
 import dispose.client.consumer.StdOutConsumerStream;
 import dispose.client.producer.RandomProducerStream;
+import dispose.client.producer.SequenceProducerStream;
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
 import dispose.net.links.ObjectFifoLink;
@@ -49,11 +50,15 @@ public class ExampleJob
       nodeThread.start();
     }
     
-    Stream source = new RandomProducerStream();
-    Stream a = source.apply(Op.MAX, 5);
-    Stream b = source.apply(Op.AVG, 5);
-    Stream d = b.join(3, source.apply(Op.MIN, 5)).apply(Op.MIN, 4);
-    Stream consumer = new StdOutConsumerStream(a.join(4, d).apply(Op.MAX, 1));
+    /* Simple stream example. The final output is a series 
+     * of numbers starting from 5.0 and so on.
+     */
+    Stream source = new SequenceProducerStream(50, 0, 100);
+    Stream left = source.apply(Op.MAX, 5);
+    Stream right = source.apply(Op.AVG, 3).apply(Op.MAX,5);
+    Stream joined = left.join(5, right);
+    Stream consumer = new StdOutConsumerStream(joined);
+    
     ClientDag compDag = ClientDag.derive(consumer);
     
     UUID jobid = UUID.randomUUID();
