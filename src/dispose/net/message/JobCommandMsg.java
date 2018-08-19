@@ -2,8 +2,10 @@ package dispose.net.message;
 
 import java.util.UUID;
 
+import dispose.net.links.LinkBrokenException;
 import dispose.net.supervisor.Job;
 import dispose.net.supervisor.NodeProxy;
+import dispose.net.supervisor.ResourceUnderrunException;
 import dispose.net.supervisor.Supervisor;
 
 public class JobCommandMsg extends CtrlMessage
@@ -37,7 +39,7 @@ public class JobCommandMsg extends CtrlMessage
         try {
           job.materialize();
           job.start();
-        } catch (Exception e) {
+        } catch (LinkBrokenException | ResourceUnderrunException e) {
           throw new MessageFailureException(e);
         }
         break;

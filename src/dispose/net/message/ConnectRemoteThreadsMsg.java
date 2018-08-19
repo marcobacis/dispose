@@ -108,7 +108,7 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
         link = SocketLink.connectTo(getRemoteHost(), port());
         success = true;
         
-      } catch (Exception e) {
+      } catch (IOException e) {
         DisposeLog.info(this, "failed");
         attemptsLeft--;
         

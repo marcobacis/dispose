@@ -3,6 +3,7 @@ package dispose.net.message;
 import java.util.UUID;
 
 import dispose.client.ClientDag;
+import dispose.net.supervisor.InvalidDagException;
 import dispose.net.supervisor.Job;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
@@ -27,7 +28,7 @@ public class CreateJobMsg extends CtrlMessage
     try {
       Job newjob = Job.jobFromClientDag(jid, dag, supervis, nodem);
       supervis.createJob(newjob);
-    } catch (Exception e) {
+    } catch (InvalidDagException e) {
       throw new MessageFailureException(e);
     }
   }

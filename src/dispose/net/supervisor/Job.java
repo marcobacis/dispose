@@ -11,7 +11,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import dispose.client.ClientDag;
+import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.AckType;
+import dispose.net.links.NotAcknowledgeableException;
 import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.ConnectThreadsMsg;
 import dispose.net.message.CtrlMessage;
@@ -62,11 +64,11 @@ public class Job
   }
   
   
-  private void reallocateAllNodes() throws Exception
+  private void reallocateAllNodes() throws ResourceUnderrunException
   {
     List<NodeProxy> physNodes = new ArrayList<>(supervis.getNodes());
     if (physNodes.size() < 1)
-      throw new Exception("how can I instantiate a dag if there are no nodes to use?!");
+      throw new ResourceUnderrunException("how can I instantiate a dag if there are no nodes to use?!");
     
     logNodeToPhysNode = new HashMap<>();
     
@@ -92,7 +94,7 @@ public class Job
   }
   
   
-  public void materialize() throws Exception
+  public void materialize() throws LinkBrokenException, ResourceUnderrunException
   {
     reallocateAllNodes();
     materializeAllNodes();
@@ -100,7 +102,7 @@ public class Job
   }
   
   
-  private void materializeAllNodes() throws Exception
+  private void materializeAllNodes() throws LinkBrokenException
   {
     Collection<ComputeNode> logNodes = jobDag.getNodes();
     
@@ -116,12 +118,16 @@ public class Job
       }
       physNode.getLink().sendMsgAndRequestAck(msg);
       // TODO: wait acks after sending all the messages
-      physNode.getLink().waitAck(msg);
+      try {
+        physNode.getLink().waitAck(msg);
+      } catch (NotAcknowledgeableException e) {
+        e.printStackTrace();
+      }
     }
   }
   
   
-  private void materializeAllLinks() throws Exception
+  private void materializeAllLinks() throws LinkBrokenException
   {
     Collection<LinkDescription> links = jobDag.getLinks();
     List<LinkDescription> localLinks = new ArrayList<>();
@@ -141,7 +147,7 @@ public class Job
   }
   
   
-  private void materializeLocalLinks(Collection<LinkDescription> localLinks) throws Exception
+  private void materializeLocalLinks(Collection<LinkDescription> localLinks) throws LinkBrokenException
   {
     for (LinkDescription localLink: localLinks) {
       NodeProxy physNode = logNodeToPhysNode.get(localLink.getSourceNodeId());
@@ -151,7 +157,7 @@ public class Job
   }
   
   
-  private void materializeRemoteLinks(Collection<LinkDescription> remoteLinks) throws Exception
+  private void materializeRemoteLinks(Collection<LinkDescription> remoteLinks) throws LinkBrokenException
   {
     /* TODO: parallelize link instantiation */
     
@@ -165,18 +171,26 @@ public class Job
 
       CtrlMessage msg = new ConnectRemoteThreadsMsg(snid, dnid, physNode1.getNetworkAddress(), port);
       physNode2.getLink().sendMsgAndRequestAck(msg, AckType.RECEPTION);
-      physNode2.getLink().waitAck(msg);
+      try {
+        physNode2.getLink().waitAck(msg);
+      } catch (NotAcknowledgeableException e) {
+        e.printStackTrace();
+      }
       
       CtrlMessage msg2 = new ConnectRemoteThreadsMsg(snid, dnid, physNode2.getNetworkAddress(), port);
       physNode1.getLink().sendMsgAndRequestAck(msg2, AckType.PROCESSING);
-      physNode1.getLink().waitAck(msg2);
+      try {
+        physNode1.getLink().waitAck(msg2);
+      } catch (NotAcknowledgeableException e) {
+        e.printStackTrace();
+      }
       
       port++;
     }
   }
   
   
-  public void start() throws Exception
+  public void start() throws LinkBrokenException
   {
     Set<NodeProxy> pnodes = new HashSet<>(logNodeToPhysNode.values());
     for (NodeProxy pnode: pnodes) {
