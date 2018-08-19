@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import dispose.log.DisposeLog;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.CtrlMessage;
@@ -78,9 +79,10 @@ public class Node implements Runnable, MonitoredLink.Delegate
   @Override
   public void linkIsBroken(Exception e)
   {
-    System.out.println("link down in node");
-    e.printStackTrace();
+    DisposeLog.critical(this, "control link down in node; exc = ", e);
+    teardown();
   }
+  
   
   public synchronized void sendMsgToSupervisor(int opID, Message msg)
   {
@@ -90,6 +92,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
       linkIsBroken(e);
     }
   }
+  
   
   public void injectIntoSource(Message toInject)
   {
@@ -101,6 +104,16 @@ public class Node implements Runnable, MonitoredLink.Delegate
         ((SourceThread) thread).injectMessage(toInject);
         return;
       }
+    }
+  }
+  
+  
+  private void teardown()
+  {
+    DisposeLog.critical(this, "node teardown initiated");
+    Collection<ComputeThread> operatorl = operators.values();
+    for (ComputeThread op: operatorl) {
+      op.stop();
     }
   }
   

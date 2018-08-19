@@ -1,7 +1,6 @@
 package dispose.net.node.threads;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -12,18 +11,14 @@ import dispose.net.common.types.NullData;
 
 public class OperatorInputState implements Serializable
 {
-
   private static final long serialVersionUID = 5354298488928186074L;
-
   private int numInputs;
-  
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
-  
   private DataAtom[] inputAtoms;
-  
   private Boolean[] readyAtoms;
-  
   private Boolean[] endAtoms;
+  private boolean killFlag = false;
+  
   
   public OperatorInputState(List<ConcurrentLinkedQueue<DataAtom>> inQueues)
   {
@@ -40,6 +35,7 @@ public class OperatorInputState implements Serializable
       endAtoms[d] = false;
     }
   }
+  
   
   public DataAtom[] recvAtoms()
   {
@@ -66,6 +62,7 @@ public class OperatorInputState implements Serializable
     return inputAtoms;
   }
   
+  
   public DataAtom[] recvAtomsBlocking()
   {
     DataAtom[] ret = recvAtoms();
@@ -84,22 +81,27 @@ public class OperatorInputState implements Serializable
     }
     
     return recvAtoms();
-    
   }
+  
   
   private boolean unblockCondition()
   {
     return stopCondition() || processCondition();
   }
   
+  
   public boolean stopCondition()
   {
+    if (killFlag)
+      return true;
+    
     boolean stopCondition = true;
     for(Boolean end : endAtoms)
       stopCondition &= end;
     
     return stopCondition;
   }
+  
   
   public boolean processCondition()
   {
@@ -110,6 +112,7 @@ public class OperatorInputState implements Serializable
     return condition;
   }
   
+  
   public void resetAfterProcessing()
   {
     for (int j = 0; j < inputAtoms.length; j++) {
@@ -118,6 +121,13 @@ public class OperatorInputState implements Serializable
         inputAtoms[j] = new NullData();
       }
     }
+  }
+  
+  
+  synchronized public void forceStop()
+  {
+    killFlag = true;
+    notifyAll();
   }
   
 }

@@ -76,6 +76,7 @@ public class OperatorThread extends ComputeThread
       new OperatorInputDelegate(this, idx)));
   }
 
+  
   /** Set the output link (there can be many) for the given downstream operator
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
@@ -84,7 +85,6 @@ public class OperatorThread extends ComputeThread
   {
     outLink.setOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
   }
-  
 
 
   /** Input links delegate, responsible for asynchronously receiving DataAtoms
@@ -171,7 +171,6 @@ public class OperatorThread extends ComputeThread
     
     Thread processThread = new Thread(() -> process());
     processThread.start();
-    
   }
 
 
@@ -201,6 +200,8 @@ public class OperatorThread extends ComputeThread
   {
     running.set(false);
 
+    barrier.forceStop();
+    
     for (MonitoredLink inLink : inStreams.values())
       inLink.close();
     
@@ -271,7 +272,6 @@ public class OperatorThread extends ComputeThread
 
       checkpoints.remove(id);
     }
-
   }
 
   
@@ -280,9 +280,9 @@ public class OperatorThread extends ComputeThread
   private void process()
   {
     while (this.running.get()) {
+      
       // I/O processing
       try {
-        
         DataAtom[] inputAtoms = barrier.recvAtomsBlocking();
         
         if (barrier.stopCondition()) {
@@ -301,7 +301,6 @@ public class OperatorThread extends ComputeThread
           }
 
           barrier.resetAfterProcessing();
-          
         }
 
       } catch (Exception e) {
