@@ -57,7 +57,7 @@ public class JobDag
   }
   
   
-  public JobDag(ClientDag dag) throws Exception
+  public JobDag(ClientDag dag) throws InvalidDagException
   {
     List<Stream> streams = dag.getNodes();
     for (Stream stream: streams) {
@@ -90,7 +90,7 @@ public class JobDag
             logNode = new SumWindowOperator(stream.getID(), stream.getWindowSize(), stream.getWindowSlide());
             break;
           default:
-            throw new Exception("unknown op");
+            throw new InvalidDagException("unknown op");
         }
       }
       

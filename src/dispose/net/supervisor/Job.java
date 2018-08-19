@@ -48,7 +48,7 @@ public class Job
   }
   
   
-  public static Job jobFromClientDag(UUID id, ClientDag dag, Supervisor supervis, NodeProxy owner) throws Exception
+  public static Job jobFromClientDag(UUID id, ClientDag dag, Supervisor supervis, NodeProxy owner) throws InvalidDagException
   {
     JobDag jobDag = new JobDag(dag);
     Job job = new Job(id, jobDag, new HashMap<>(), supervis, owner);
