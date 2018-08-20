@@ -56,7 +56,6 @@ public class NodeProxy implements MonitoredLink.Delegate
   {
     DisposeLog.critical(this, "node @ ", networkAddress, " unavailable; exc = ", e != null ? e : "timeout");
     owner.removeNode(this);
-    link = null;
   }
   
   

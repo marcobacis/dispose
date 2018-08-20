@@ -44,6 +44,7 @@ public class OperatorThread extends ComputeThread
 
   private Thread processThread;
   
+  
   public OperatorThread(Node owner, Operator operator)
   {
     super(owner);
@@ -68,7 +69,6 @@ public class OperatorThread extends ComputeThread
    * @throws IOException */
   public synchronized void setInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
-
     boolean repair = inStreams.containsKey(fromId);
 
     Integer idx = lastInputIdx;
@@ -188,7 +188,6 @@ public class OperatorThread extends ComputeThread
   public void pause()
   {
     this.running.set(false);
-    processThread.notify();
   }
 
 
@@ -251,7 +250,6 @@ public class OperatorThread extends ComputeThread
    * @param msg The received message */
   private synchronized void notifyChkpMessage(int idx, ChkpRequestMsg msg)
   {
-
     OperatorCheckpoint current;
 
     int id = msg.getID();
