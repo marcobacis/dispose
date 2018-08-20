@@ -6,6 +6,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
@@ -14,6 +18,7 @@ public class Supervisor implements Runnable
 {
   private Set<NodeProxy> nodes = new HashSet<>();
   private Map<UUID, Job> currentJobs = new HashMap<>();
+  private Map<UUID, ExecutorService> jobSerialQueues = new HashMap<>(); 
 
   
   @Override
@@ -42,7 +47,8 @@ public class Supervisor implements Runnable
     nodes.remove(nm);
     
     for (Job job: currentJobs.values()) {
-      job.nodeHasDied(nm);
+      ExecutorService q = jobSerialQueues.get(job.getID());
+      q.submit(() -> job.nodeHasDied(nm));
     }
   }
   
@@ -57,11 +63,27 @@ public class Supervisor implements Runnable
   {
     DisposeLog.info(this, "created job ", j.getID());
     currentJobs.put(j.getID(), j);
+    jobSerialQueues.put(j.getID(), Executors.newSingleThreadExecutor());
   }
   
   
-  synchronized public Job getJob(UUID jobid)
+  synchronized protected void removeJob(UUID jid)
   {
-    return currentJobs.get(jobid);
+    ExecutorService eq = jobSerialQueues.get(jid);
+    eq.shutdown();
+    currentJobs.remove(jid);
+    jobSerialQueues.remove(jid);
+  }
+  
+  
+  synchronized public <T> Future<T> executeJobFunction(UUID jobid, Function<Job, T> qexc) throws DeadJobException
+  {
+    Job j = currentJobs.get(jobid);
+    ExecutorService q = jobSerialQueues.get(jobid);
+    if (j == null || q == null)
+      throw new DeadJobException();
+    return q.submit(() -> {
+      return qexc.apply(j);
+    });
   }
 }

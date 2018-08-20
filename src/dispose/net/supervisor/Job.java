@@ -25,6 +25,8 @@ import dispose.net.node.datasources.DataSource;
 import dispose.net.node.operators.Operator;
 import dispose.net.supervisor.JobDag.LinkDescription;
 
+
+/** A class representing a job. Not thread-safe. */
 public class Job implements LogInfo
 {
   private UUID id;
@@ -34,7 +36,6 @@ public class Job implements LogInfo
   private JobDagAllocation allocation;
   
   
-  /* TODO: garbage collection on failure */
   /* TODO: retry on failure with retry count */
   
   
@@ -160,6 +161,7 @@ public class Job implements LogInfo
     allocation.removeDeadPhysicalNodes(allocation.livePhysicalNodes());
     
     DisposeLog.info(this, "this task has been killed");
+    supervis.removeJob(id);
   }
   
   

@@ -1,8 +1,12 @@
 package dispose.net.message;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import dispose.net.links.LinkBrokenException;
+import dispose.net.supervisor.DeadJobException;
 import dispose.net.supervisor.Job;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.ResourceUnderrunException;
@@ -18,7 +22,7 @@ public class JobCommandMsg extends CtrlMessage
   public enum Command
   {
     START,
-    STOP
+    KILL
   }
   
   
@@ -32,19 +36,39 @@ public class JobCommandMsg extends CtrlMessage
   @Override
   public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
-    Job job = supervis.getJob(jid);
+    Exception exc;
+    Function<Job, Exception> jfunc;
     
     switch (cmd) {
       case START:
-        try {
-          job.materialize();
-          job.start();
-        } catch (LinkBrokenException | ResourceUnderrunException e) {
-          throw new MessageFailureException(e);
-        }
+        jfunc = (Job job) -> {
+          Exception exc2 = null;
+          try {
+            job.materialize();
+            job.start();
+          } catch (LinkBrokenException | ResourceUnderrunException e) {
+            exc2 = e;
+          }
+          return exc2;
+        };
         break;
-      case STOP:
+      case KILL:
+        jfunc = (Job job) -> {
+          job.kill();
+          return null;
+        };
         break;
+      default:
+        throw new MessageFailureException("unrecognized command");
     }
+    
+    try {
+      Future<Exception> fexc = supervis.executeJobFunction(jid, jfunc);
+      exc = fexc.get();
+    } catch (InterruptedException | ExecutionException | DeadJobException e) {
+      throw new MessageFailureException(e);
+    }
+    if (exc != null)
+      throw new MessageFailureException(exc);
   }
 }
