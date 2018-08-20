@@ -19,7 +19,9 @@ import dispose.net.message.DeployDataSinkThreadMsg;
 import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
 import dispose.net.message.ThreadCommandMsg;
+import dispose.net.message.chkp.ChkpRequestMsg;
 import dispose.net.node.ComputeNode;
+import dispose.net.node.OperatorCheckpoint;
 import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasources.DataSource;
 import dispose.net.node.operators.Operator;
@@ -34,6 +36,7 @@ public class Job implements LogInfo
   private NodeProxy owner;
   private JobDag jobDag;
   private JobDagAllocation allocation;
+  private CheckpointArchive checkpoints;
   
   
   /* TODO: retry on failure with retry count */
@@ -46,6 +49,7 @@ public class Job implements LogInfo
     this.allocation = initialNodeAlloc;
     this.supervis = supervis;
     this.owner = owner;
+    this.checkpoints = new CheckpointArchive();
   }
   
   
@@ -190,5 +194,29 @@ public class Job implements LogInfo
       DisposeLog.critical(this, "the owner has died; garbage-collecting the rest of the job");
       kill();
     }
+  }
+  
+  
+  public void requestCheckpoint()
+  {
+    DisposeLog.info(this, "requesting checkpoint");
+    UUID newckpid = UUID.randomUUID();
+    checkpoints.addNewCheckpoint(newckpid);
+    try {
+      owner.getLink().sendMsg(new ChkpRequestMsg(newckpid));
+    } catch (LinkBrokenException e) {
+      DisposeLog.error(this, "cannot request checkpoint; exc = ", e);
+    }
+  }
+  
+  
+  public boolean reclaimCheckpointPart(UUID ckpid, OperatorCheckpoint part)
+  {
+    if (!checkpoints.containsCheckpoint(ckpid))
+      return false; 
+    
+    checkpoints.addCheckpointPart(ckpid, part);
+    DisposeLog.info(this, "reclaimed ckp ", ckpid, " part opid=", part.getOperator().getID());
+    return true;
   }
 }

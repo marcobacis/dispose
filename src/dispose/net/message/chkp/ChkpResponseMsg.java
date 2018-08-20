@@ -2,18 +2,18 @@ package dispose.net.message.chkp;
 
 import java.util.UUID;
 
-import dispose.net.message.Message;
+import dispose.net.message.CtrlMessage;
+import dispose.net.message.MessageFailureException;
 import dispose.net.node.OperatorCheckpoint;
+import dispose.net.supervisor.NodeProxy;
+import dispose.net.supervisor.Supervisor;
 
-public class ChkpResponseMsg extends Message
+public class ChkpResponseMsg extends CtrlMessage
 {
-
   private static final long serialVersionUID = -1987640770334245047L;
-
-  private UUID uuid = UUID.randomUUID();
-  
-  private int chkpId;
+  private UUID chkpId;
   private OperatorCheckpoint checkpoint;
+  
   
   public ChkpResponseMsg(OperatorCheckpoint checkpoint)
   {
@@ -21,20 +21,10 @@ public class ChkpResponseMsg extends Message
     this.checkpoint = checkpoint;
   }
   
-  public int getID()
-  {
-    return chkpId;
-  }
-  
-  public OperatorCheckpoint getCheckpoint()
-  {
-    return this.checkpoint;
-  }
   
   @Override
-  public UUID getUUID()
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
-    return uuid;
+    supervis.receiveCheckpointPart(chkpId, checkpoint);
   }
-  
 }

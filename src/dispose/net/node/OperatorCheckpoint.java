@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import dispose.net.common.DataAtom;
@@ -19,20 +20,19 @@ import dispose.net.node.threads.OperatorInputState;
 
 public class OperatorCheckpoint implements Serializable
 {
-
   private static final long serialVersionUID = -3316112612186425718L;
 
   private long timestamp = last_timestamp++;
   private static long last_timestamp = 0;
 
-  private int id;
+  private UUID id;
   private Operator op;
   private List<ConcurrentLinkedQueue<DataAtom>> inFlight;
   private OperatorInputState inputState;
   private boolean[] checked;
 
 
-  public OperatorCheckpoint(int id, Operator operator,
+  public OperatorCheckpoint(UUID id, Operator operator,
     OperatorInputState inputState)
   {
     this.id = id;
@@ -91,7 +91,7 @@ public class OperatorCheckpoint implements Serializable
   }
 
 
-  public int getID()
+  public UUID getID()
   {
     return this.id;
   }

@@ -112,8 +112,7 @@ public class SourceThread extends ComputeThread
         }
       }
     } catch (LinkBrokenException e) {
-      DisposeLog.error(this, "oh oh we've lost the link \\OwO/");
-      e.printStackTrace();
+      DisposeLog.error(this, "oh oh we've lost the link \\OwO/; exc = ", e);
     }
   }
   

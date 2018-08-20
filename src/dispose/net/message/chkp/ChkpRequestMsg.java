@@ -1,21 +1,23 @@
 package dispose.net.message.chkp;
 
+import java.util.UUID;
+
 import dispose.net.message.CtrlMessage;
 import dispose.net.node.Node;
 
 public class ChkpRequestMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -6339978017034829113L;
-  private int chkpId;
+  private UUID chkpId;
   
   
-  public ChkpRequestMsg(int id)
+  public ChkpRequestMsg(UUID id)
   {
     this.chkpId = id;
   }
   
   
-  public int getID()
+  public UUID getCheckpointID()
   {
     return chkpId;
   }

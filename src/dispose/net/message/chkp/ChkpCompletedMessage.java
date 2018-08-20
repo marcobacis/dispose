@@ -6,21 +6,22 @@ import dispose.net.message.Message;
 
 public class ChkpCompletedMessage extends Message
 {
-
   private static final long serialVersionUID = -6339978017034829113L;
   private UUID uuid = UUID.randomUUID();
+  private UUID chkpId;
   
-  private int chkpId;
   
-  public ChkpCompletedMessage(int id)
+  public ChkpCompletedMessage(UUID id)
   {
     this.chkpId = id;
   }
   
-  public int getID()
+  
+  public UUID getCheckpointID()
   {
     return chkpId;
   }
+  
   
   @Override
   public UUID getUUID()

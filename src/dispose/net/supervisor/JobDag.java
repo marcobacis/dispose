@@ -24,6 +24,7 @@ public class JobDag
 {
   private List<LinkDescription> links = new ArrayList<>();
   private Map<Integer, ComputeNode> logNodes = new HashMap<>();
+  private int sourceId, sinkId;
   
   
   public class LinkDescription
@@ -65,8 +66,10 @@ public class JobDag
       
       if (dag.isSource(stream)) {
         logNode = SourceFactory.getFromStream(stream);
+        sourceId = stream.getID();
       } else if (dag.isSink(stream)) {
         logNode = SinkFactory.getFromStream(stream);
+        sinkId = stream.getID();
       } else {
         Op operation = stream.getOperation();
         switch (operation) {
@@ -110,6 +113,16 @@ public class JobDag
   }
   
   
+  public Collection<Integer> allNodeIds()
+  {
+    ArrayList<Integer> ids = new ArrayList<>();
+    for (ComputeNode node: logNodes.values()) {
+      ids.add(node.getID());
+    }
+    return ids;
+  }
+  
+  
   public Collection<LinkDescription> getLinks()
   {
     return Collections.unmodifiableCollection(links);
@@ -119,5 +132,17 @@ public class JobDag
   public ComputeNode getNodeFromId(int id)
   {
     return logNodes.get(id);
+  }
+  
+  
+  public int getSourceNodeId()
+  {
+    return sourceId;
+  }
+  
+  
+  public int getSinkNodeId()
+  {
+    return sinkId;
   }
 }

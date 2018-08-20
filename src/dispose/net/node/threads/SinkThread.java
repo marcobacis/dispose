@@ -87,7 +87,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
     } else if(msg instanceof ChkpRequestMsg) {
       //TODO handle checkpoint end
       ChkpRequestMsg chkp = (ChkpRequestMsg) msg;
-      DisposeLog.debug(SinkThread.class, "Completed checkpoint " + chkp.getID());
+      DisposeLog.debug(SinkThread.class, "Completed checkpoint ", chkp.getCheckpointID());
     }
   }
 

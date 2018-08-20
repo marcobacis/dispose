@@ -38,7 +38,7 @@ public class OperatorThread extends ComputeThread
 
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
 
-  private HashMap<Integer, OperatorCheckpoint> checkpoints = new HashMap<>();
+  private HashMap<UUID, OperatorCheckpoint> checkpoints = new HashMap<>();
 
   private AtomicBoolean running = new AtomicBoolean(false);
 
@@ -252,7 +252,7 @@ public class OperatorThread extends ComputeThread
   {
     OperatorCheckpoint current;
 
-    int id = msg.getID();
+    UUID id = msg.getCheckpointID();
 
     if (checkpoints.containsKey(id)) {
       current = checkpoints.get(id);

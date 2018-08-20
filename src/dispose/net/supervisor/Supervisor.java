@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,17 +15,24 @@ import java.util.function.Function;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
+import dispose.net.node.OperatorCheckpoint;
 
 public class Supervisor implements Runnable
 {
   private Set<NodeProxy> nodes = new HashSet<>();
   private Map<UUID, Job> currentJobs = new HashMap<>();
   private Map<UUID, ExecutorService> jobSerialQueues = new HashMap<>(); 
+  private Timer checkpointTimer;
 
   
   @Override
   public void run()
   {
+    CheckpointTimerTask ckpTimTask = new CheckpointTimerTask();
+    ckpTimTask.owner = this;
+    checkpointTimer = new Timer("checkpoint-timer");
+    checkpointTimer.schedule(ckpTimTask, 10, Config.checkpointPeriod);
+    
     while (true) {
       try {
         NodeProxy nm = NodeProxy.connectNodeMonitor(this, Config.nodeCtrlPort);
@@ -85,5 +94,35 @@ public class Supervisor implements Runnable
     return q.submit(() -> {
       return qexc.apply(j);
     });
+  }
+  
+  
+  private class CheckpointTimerTask extends TimerTask
+  {
+    Supervisor owner;
+    
+    @Override
+    public void run()
+    {
+      owner.initiateCheckpoints();
+    }
+  }
+  
+  
+  synchronized private void initiateCheckpoints()
+  {
+    for (Job job: currentJobs.values()) {
+      ExecutorService q = jobSerialQueues.get(job.getID());
+      q.submit(() -> job.requestCheckpoint());
+    }
+  }
+  
+  
+  synchronized public void receiveCheckpointPart(UUID ckpId, OperatorCheckpoint ckpPart)
+  {
+    for (Job job: currentJobs.values()) {
+      ExecutorService q = jobSerialQueues.get(job.getID());
+      q.submit(() -> job.reclaimCheckpointPart(ckpId, ckpPart));
+    }
   }
 }
