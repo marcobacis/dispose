@@ -222,8 +222,9 @@ public class MonitoredLink
     }
     HeartbeatTask hbt = new HeartbeatTask();
     hbt.parent = this;
+    
     heartbeatTimer = new Timer("heartbeat-" + Integer.toHexString(hashCode()));
-    heartbeatTimer.schedule(hbt, 10, msec);
+    heartbeatTimer.schedule(hbt, (int)(Math.random() * 0.25 * msec), msec);
   }
   
   
