@@ -18,7 +18,12 @@ public class StdoutLogEmitter implements LogEmitter
   {
     if (pri.toInteger() < highestPri)
       return;
-    System.out.println(date.toString() + ": [" + originator + "] " + message);
+    
+    String line = date.toString() + ": [" + originator + "] " + message;
+    if (pri.toInteger() >= LogPriority.ERROR.toInteger())
+      System.err.println(line);
+    else
+      System.out.println(line);
   }
 
 }
