@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import dispose.client.ClientDag;
 import dispose.log.DisposeLog;
+import dispose.log.LogInfo;
 import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.AckType;
 import dispose.net.links.NotAcknowledgeableException;
@@ -24,7 +25,7 @@ import dispose.net.node.datasources.DataSource;
 import dispose.net.node.operators.Operator;
 import dispose.net.supervisor.JobDag.LinkDescription;
 
-public class Job
+public class Job implements LogInfo
 {
   private UUID id;
   private Supervisor supervis;
@@ -44,6 +45,13 @@ public class Job
     this.allocation = initialNodeAlloc;
     this.supervis = supervis;
     this.owner = owner;
+  }
+  
+  
+  @Override
+  public String loggingName()
+  {
+    return "Job " + id.toString();
   }
   
   
@@ -177,7 +185,7 @@ public class Job
     DisposeLog.critical(this, "RIP node ", np.nodeID());
     
     if (np == owner) {
-      DisposeLog.critical(this, "the owner of task ", this, " has died; garbage-collecting the rest of the task");
+      DisposeLog.critical(this, "the owner has died; garbage-collecting the rest of the job");
       kill();
     }
   }

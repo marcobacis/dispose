@@ -25,7 +25,9 @@ public class DisposeLog
     String sorigin;
     if (origin == null) {
       sorigin = "<null>";
-    } if (origin instanceof String) {
+    } if (origin instanceof LogInfo) {
+      sorigin = ((LogInfo)origin).loggingName();
+    } else if (origin instanceof String) {
       sorigin = (String)origin;
     } else if (origin instanceof Class) {
       sorigin = ((Class<?>)origin).getSimpleName();
@@ -35,10 +37,13 @@ public class DisposeLog
     
     StringBuilder smsg = new StringBuilder();
     for (Object mobj: msg) {
-      if (mobj == null)
+      if (mobj == null) {
         smsg.append("<null>");
-      else
+      } else if (mobj instanceof LogInfo) {
+        smsg.append(((LogInfo)mobj).loggingName());
+      } else {
         smsg.append(mobj.toString());
+      }
     }
     
     DisposeLog.standardEmitter.emitMessage(pri, date, sorigin, smsg.toString());
