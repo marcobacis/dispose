@@ -8,7 +8,7 @@ import dispose.net.message.DeployDataSinkThreadMsg;
 import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
-import dispose.net.message.StartThreadMsg;
+import dispose.net.message.ThreadCommandMsg;
 import dispose.net.node.Node;
 import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasinks.ObjectLogDataSink;
@@ -54,8 +54,8 @@ public class NodeExerciser
     ctrl1A.sendMsg(new ConnectRemoteThreadsMsg(max.getID(), avg.getID(), "127.0.0.1", 9003));
     ctrl1A.sendMsg(new ConnectThreadsMsg(avg.getID(), printer.getID()));
     
-    ctrl0A.sendMsg(new StartThreadMsg());
-    ctrl1A.sendMsg(new StartThreadMsg());
+    ctrl0A.sendMsg(new ThreadCommandMsg(ThreadCommandMsg.Command.START));
+    ctrl1A.sendMsg(new ThreadCommandMsg(ThreadCommandMsg.Command.START));
 
     while (true) {
       TimeUnit.SECONDS.sleep(1);

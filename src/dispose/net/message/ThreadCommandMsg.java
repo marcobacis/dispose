@@ -11,28 +11,39 @@ import dispose.net.node.Node;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 
-public class StartThreadMsg extends CtrlMessage
+public class ThreadCommandMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -2977267460391785421L;
   private Set<Integer> threads;
   private boolean all = false;
+  private Command cmd;
   
   
-  public StartThreadMsg()
+  public enum Command
+  {
+    START,
+    STOP
+  }
+  
+  
+  public ThreadCommandMsg(Command cmd)
   {
     this.all = true;
+    this.cmd = cmd;
   }
   
   
-  public StartThreadMsg(int id)
+  public ThreadCommandMsg(int id, Command cmd)
   {
     this.threads = Collections.singleton(id);
+    this.cmd = cmd;
   }
   
   
-  public StartThreadMsg(Collection<Integer> threads)
+  public ThreadCommandMsg(Collection<Integer> threads, Command cmd)
   {
     this.threads = new HashSet<>(threads);
+    this.cmd = cmd;
   }
 
   
@@ -48,7 +59,16 @@ public class StartThreadMsg extends CtrlMessage
     
     for (Integer opid: ops) {
       ComputeThread opthd = node.getComputeThread(opid);
-      opthd.start();
+      switch (cmd) {
+        case START:
+          opthd.start();
+          break;
+        case STOP:
+          opthd.stop();
+          break;
+        default:
+          break;
+      }
     }
   }
   

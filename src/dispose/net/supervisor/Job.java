@@ -1,16 +1,13 @@
 package dispose.net.supervisor;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
 import dispose.client.ClientDag;
+import dispose.log.DisposeLog;
 import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.AckType;
 import dispose.net.links.NotAcknowledgeableException;
@@ -20,7 +17,7 @@ import dispose.net.message.CtrlMessage;
 import dispose.net.message.DeployDataSinkThreadMsg;
 import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
-import dispose.net.message.StartThreadMsg;
+import dispose.net.message.ThreadCommandMsg;
 import dispose.net.node.ComputeNode;
 import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasources.DataSource;
@@ -33,18 +30,18 @@ public class Job
   private Supervisor supervis;
   private NodeProxy owner;
   private JobDag jobDag;
-  private Map<Integer, NodeProxy> logNodeToPhysNode;
+  private JobDagAllocation allocation;
   
   
   /* TODO: garbage collection on failure */
   /* TODO: retry on failure with retry count */
   
   
-  public Job(UUID id, JobDag jobDag, Map<Integer, NodeProxy> initialNodeAlloc, Supervisor supervis, NodeProxy owner)
+  public Job(UUID id, JobDag jobDag, JobDagAllocation initialNodeAlloc, Supervisor supervis, NodeProxy owner)
   {
     this.id = id;
     this.jobDag = jobDag;
-    this.logNodeToPhysNode = initialNodeAlloc;
+    this.allocation = initialNodeAlloc;
     this.supervis = supervis;
     this.owner = owner;
   }
@@ -53,7 +50,7 @@ public class Job
   public static Job jobFromClientDag(UUID id, ClientDag dag, Supervisor supervis, NodeProxy owner) throws InvalidDagException
   {
     JobDag jobDag = new JobDag(dag);
-    Job job = new Job(id, jobDag, new HashMap<>(), supervis, owner);
+    Job job = new Job(id, jobDag, new JobDagAllocation(jobDag), supervis, owner);
     return job;
   }
   
@@ -64,41 +61,12 @@ public class Job
   }
   
   
-  private void reallocateAllNodes() throws ResourceUnderrunException
-  {
-    List<NodeProxy> physNodes = new ArrayList<>(supervis.getNodes());
-    if (physNodes.size() < 1)
-      throw new ResourceUnderrunException("how can I instantiate a dag if there are no nodes to use?!");
-    
-    logNodeToPhysNode = new HashMap<>();
-    
-    // TODO: Use a topological ordering to exploit logical node locality
-    // TODO: Use an abstract computation power per node metric to perform static load balancing
-    double lnodePerPnode = Double.max(1.0, (double)(jobDag.getNodes().size() - 2) / (double)physNodes.size());
-    double lnodesLeft = lnodePerPnode;
-    int currPnode = 0;
-    
-    for (ComputeNode lnode: jobDag.getNodes()) {
-      if (lnode instanceof DataSink || lnode instanceof DataSource) {
-        logNodeToPhysNode.put(lnode.getID(), owner);
-      } else {
-        NodeProxy myNode = physNodes.get(currPnode);
-        logNodeToPhysNode.put(lnode.getID(), myNode);
-        lnodesLeft -= 1.0;
-        if (lnodesLeft < 0.5) {
-          lnodesLeft += lnodePerPnode;
-          currPnode = (currPnode + 1) % physNodes.size();
-        }
-      }
-    }
-  }
-  
-  
   public void materialize() throws LinkBrokenException, ResourceUnderrunException
   {
-    reallocateAllNodes();
+    allocation.allocateAllNodes(supervis.getNodes(), owner);
     materializeAllNodes();
-    materializeAllLinks();
+    materializeLocalLinks(allocation.localLinks());
+    materializeRemoteLinks(allocation.remoteLinks());
   }
   
   
@@ -107,7 +75,7 @@ public class Job
     Collection<ComputeNode> logNodes = jobDag.getNodes();
     
     for (ComputeNode logNode: logNodes) {
-      NodeProxy physNode = logNodeToPhysNode.get(logNode.getID());
+      NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
       CtrlMessage msg;
       if (logNode instanceof DataSink) {
         msg = new DeployDataSinkThreadMsg((DataSink) logNode);
@@ -127,30 +95,10 @@ public class Job
   }
   
   
-  private void materializeAllLinks() throws LinkBrokenException
-  {
-    Collection<LinkDescription> links = jobDag.getLinks();
-    List<LinkDescription> localLinks = new ArrayList<>();
-    List<LinkDescription> remoteLinks = new ArrayList<>();
-    
-    for (LinkDescription link: links) {
-      NodeProxy ln1pn = logNodeToPhysNode.get(link.getSourceNodeId());
-      NodeProxy ln2pn = logNodeToPhysNode.get(link.getDestinationNodeID());
-      if (ln1pn == ln2pn)
-        localLinks.add(link);
-      else
-        remoteLinks.add(link);
-    }
-    
-    materializeLocalLinks(localLinks);
-    materializeRemoteLinks(remoteLinks);
-  }
-  
-  
   private void materializeLocalLinks(Collection<LinkDescription> localLinks) throws LinkBrokenException
   {
     for (LinkDescription localLink: localLinks) {
-      NodeProxy physNode = logNodeToPhysNode.get(localLink.getSourceNodeId());
+      NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(localLink.getSourceNodeId());
       CtrlMessage msg = new ConnectThreadsMsg(localLink.getSourceNodeId(), localLink.getDestinationNodeID());
       physNode.getLink().sendMsg(msg);
     }
@@ -166,8 +114,8 @@ public class Job
       int snid = remoteLink.getSourceNodeId();
       int dnid = remoteLink.getDestinationNodeID();
       
-      NodeProxy physNode1 = logNodeToPhysNode.get(snid);
-      NodeProxy physNode2 = logNodeToPhysNode.get(dnid);
+      NodeProxy physNode1 = allocation.getPhysicalNodeHostingLogicalNodeId(snid);
+      NodeProxy physNode2 = allocation.getPhysicalNodeHostingLogicalNodeId(dnid);
 
       CtrlMessage msg = new ConnectRemoteThreadsMsg(snid, dnid, physNode1.getNetworkAddress(), port);
       physNode2.getLink().sendMsgAndRequestAck(msg, AckType.RECEPTION);
@@ -192,16 +140,45 @@ public class Job
   
   public void start() throws LinkBrokenException
   {
-    Set<NodeProxy> pnodes = new HashSet<>(logNodeToPhysNode.values());
+    sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.START, false);
+  }
+  
+  
+  public void kill()
+  {
+    try {
+      sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.STOP, true);
+    } catch (LinkBrokenException e) { }
+    allocation.removeDeadPhysicalNodes(allocation.livePhysicalNodes());
+    
+    DisposeLog.info(this, "this task has been killed");
+  }
+  
+  
+  private void sendCommandToAllLogicalNodes(ThreadCommandMsg.Command cmd, boolean ignoreDead) throws LinkBrokenException
+  {
+    Set<NodeProxy> pnodes = new HashSet<>(allocation.livePhysicalNodes());
     for (NodeProxy pnode: pnodes) {
-      ArrayList<Integer> lnodes = new ArrayList<>();
-      for (Entry<Integer, NodeProxy> lnpn: logNodeToPhysNode.entrySet()) {
-        if (pnode == lnpn.getValue())
-          lnodes.add(lnpn.getKey());
+      Collection<Integer> lnodes = allocation.logicalNodesHostedInPhysicalNode(pnode);
+      CtrlMessage cmsg = new ThreadCommandMsg(lnodes, cmd);
+      try {
+        pnode.getLink().sendMsg(cmsg);
+      } catch (LinkBrokenException e) {
+        if (!ignoreDead)
+          throw e;
       }
-      
-      CtrlMessage cmsg = new StartThreadMsg(lnodes);
-      pnode.getLink().sendMsg(cmsg);
+    }
+  }
+  
+  
+  public void nodeHasDied(NodeProxy np)
+  {
+    allocation.removeDeadPhysicalNodes(Collections.singleton(np));
+    DisposeLog.critical(this, "RIP node ", np.nodeID());
+    
+    if (np == owner) {
+      DisposeLog.critical(this, "the owner of task ", this, " has died; garbage-collecting the rest of the task");
+      kill();
     }
   }
 }

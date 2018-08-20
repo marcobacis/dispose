@@ -40,6 +40,10 @@ public class Supervisor implements Runnable
   synchronized protected void removeNode(NodeProxy nm)
   {
     nodes.remove(nm);
+    
+    for (Job job: currentJobs.values()) {
+      job.nodeHasDied(nm);
+    }
   }
   
   
