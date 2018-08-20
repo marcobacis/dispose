@@ -42,12 +42,23 @@ public class OperatorThread extends ComputeThread
 
   private AtomicBoolean running = new AtomicBoolean(false);
 
-
+  private Thread processThread;
+  
   public OperatorThread(Node owner, Operator operator)
   {
     super(owner);
     this.operator = operator;
     this.opID = operator.getID();
+    
+    int numInputs = operator.getNumInputs();
+
+    inputQueues = new ArrayList<>(numInputs);
+
+    for (int d = 0; d < numInputs; d++) {
+      inputQueues.add(new ConcurrentLinkedQueue<>());
+    }
+    
+    barrier = new OperatorInputState(inputQueues);
   }
 
 
@@ -150,25 +161,23 @@ public class OperatorThread extends ComputeThread
 
   }
 
+  public void reloadFromCheckPoint(OperatorCheckpoint checkpoint) {
+    
+    checkpoints.clear();
+    
+    inputQueues = checkpoint.getInFlight();
+    operator = checkpoint.getOperator();
+    barrier = checkpoint.getInputState();
+    
+  }
 
   /** Starts the operator, by starting all the links monitors and queues */
   @Override
   public void start()
   {
-    int numInputs = operator.getNumInputs();
-
-    
-    inputQueues = new ArrayList<>(numInputs);
-
-    for (int d = 0; d < numInputs; d++) {
-      inputQueues.add(new ConcurrentLinkedQueue<>());
-    }
-    
-    barrier = new OperatorInputState(inputQueues);
-
     this.running.set(true);
     
-    Thread processThread = new Thread(() -> process());
+    this.processThread = new Thread(() -> process());
     processThread.start();
   }
 
@@ -179,6 +188,7 @@ public class OperatorThread extends ComputeThread
   public void pause()
   {
     this.running.set(false);
+    processThread.notify();
   }
 
 
@@ -189,7 +199,7 @@ public class OperatorThread extends ComputeThread
   {
     this.running.set(true);
     
-    Thread processThread = new Thread(() -> process());
+    processThread = new Thread(() -> process());
     processThread.start();
   }
 
@@ -198,6 +208,10 @@ public class OperatorThread extends ComputeThread
   public void stop()
   {
     running.set(false);
+    
+    try{
+      processThread.join();
+    } catch (InterruptedException e) { /* Who cares */ }
 
     barrier.forceStop();
     

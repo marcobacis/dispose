@@ -22,7 +22,9 @@ public class ThreadCommandMsg extends CtrlMessage
   public enum Command
   {
     START,
-    STOP
+    STOP,
+    SUSPEND,
+    RESUME
   }
   
   
@@ -65,6 +67,12 @@ public class ThreadCommandMsg extends CtrlMessage
           break;
         case STOP:
           opthd.stop();
+          break;
+        case SUSPEND:
+          opthd.pause();
+          break;
+        case RESUME:
+          opthd.resume();
           break;
         default:
           break;
