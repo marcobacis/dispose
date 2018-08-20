@@ -9,6 +9,7 @@ import dispose.net.common.DataAtom;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
 import dispose.net.message.Message;
+import dispose.net.message.chkp.ChkpCompletedMessage;
 import dispose.net.message.chkp.ChkpRequestMsg;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
@@ -85,9 +86,9 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
       DataAtom da = (DataAtom)msg;
       dataSink.processAtom(da);
     } else if(msg instanceof ChkpRequestMsg) {
-      //TODO handle checkpoint end
       ChkpRequestMsg chkp = (ChkpRequestMsg) msg;
       DisposeLog.debug(SinkThread.class, "Completed checkpoint ", chkp.getCheckpointID());
+      owner.sendMsgToSupervisor(opID, new ChkpCompletedMessage(chkp.getCheckpointID()));
     }
   }
 

@@ -2,12 +2,15 @@ package dispose.net.message.chkp;
 
 import java.util.UUID;
 
-import dispose.net.message.Message;
+import dispose.log.DisposeLog;
+import dispose.net.message.CtrlMessage;
+import dispose.net.message.MessageFailureException;
+import dispose.net.supervisor.NodeProxy;
+import dispose.net.supervisor.Supervisor;
 
-public class ChkpCompletedMessage extends Message
+public class ChkpCompletedMessage extends CtrlMessage
 {
   private static final long serialVersionUID = -6339978017034829113L;
-  private UUID uuid = UUID.randomUUID();
   private UUID chkpId;
   
   
@@ -21,12 +24,11 @@ public class ChkpCompletedMessage extends Message
   {
     return chkpId;
   }
-  
+
   
   @Override
-  public UUID getUUID()
+  public void executeOnSupervisor(Supervisor supervis, NodeProxy nodem) throws MessageFailureException
   {
-    return uuid;
+    DisposeLog.info(this, "checkpoint request ", chkpId, " arrived at the sink");
   }
-
 }
