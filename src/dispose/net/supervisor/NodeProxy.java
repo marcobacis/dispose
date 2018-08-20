@@ -24,6 +24,7 @@ public class NodeProxy implements MonitoredLink.Delegate
     this.owner = owner;
     this.networkAddress = networkAddress;
     this.link = MonitoredLink.asyncMonitorLink(link, this, Config.heartbeatPeriod * 2);
+    this.link.setHeartbeatSendPeriod(Config.heartbeatPeriod);
     this.link.sendMsg(new LogMsg("supervisor", "Node ID = " + Integer.toHexString(nodeID())));
   }
   

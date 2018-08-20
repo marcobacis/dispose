@@ -27,6 +27,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   {
     operators = new HashMap<>();
     this.ctrlLink = new MonitoredLink(ctrlLink, this);
+    this.ctrlLink.setTimeoutPeriod(Config.heartbeatPeriod * 2);
     this.ctrlLink.setHeartbeatSendPeriod(Config.heartbeatPeriod);
   }
 
