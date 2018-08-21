@@ -333,7 +333,7 @@ public class Job implements LogInfo
         /* sink */
         continue;
       
-      CtrlMessage msg = new DeployOperatorFromChkpMsg(ckp);
+      CtrlMessage msg = new DeployOperatorFromChkpMsg(ckpid, ckp);
       physNode.getLink().sendMsgAndRequestAck(msg);
       // TODO: wait acks after sending all the messages
       try {
