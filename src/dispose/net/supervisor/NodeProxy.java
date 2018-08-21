@@ -3,6 +3,7 @@ package dispose.net.supervisor;
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
 import dispose.net.links.Link;
+import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.SocketLink;
 import dispose.net.message.CtrlMessage;
@@ -19,7 +20,7 @@ public class NodeProxy implements MonitoredLink.Delegate
   public static String LOCAL_NETWORK_ADDRESS = "127.0.0.1";
   
   
-  public NodeProxy(Supervisor owner, Link link, String networkAddress) throws Exception
+  public NodeProxy(Supervisor owner, Link link, String networkAddress) throws LinkBrokenException 
   {
     this.owner = owner;
     this.networkAddress = networkAddress;
