@@ -16,7 +16,6 @@ import dispose.net.message.CtrlMessage;
 import dispose.net.message.JobCommandMsg;
 import dispose.net.message.JobCommandMsg.Command;
 import dispose.net.node.Node;
-import dispose.net.supervisor.LocalSupervisor;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 import dispose.test.ExampleJob;
@@ -79,7 +78,7 @@ public class Context
   {
     remoteSup = false;
     
-    localSupervisor = new LocalSupervisor();
+    localSupervisor = new Supervisor();
     localSupervisorThread = new Thread(localSupervisor);
     localSupervisorThread.start();
     ObjectFifoLink _localLinkA = new ObjectFifoLink();
