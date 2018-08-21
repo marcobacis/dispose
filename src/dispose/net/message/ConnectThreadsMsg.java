@@ -39,8 +39,8 @@ public class ConnectThreadsMsg extends CtrlMessage
     pipeLinkA.connect(pipeLinkB);
     
     try {
-      node.getComputeThread(getFrom()).setOutputLink(pipeLinkA, getTo());
-      node.getComputeThread(getTo()).setInputLink(pipeLinkB, getFrom());
+      node.getComputeThread(getFrom()).addOutputLink(pipeLinkA, getTo());
+      node.getComputeThread(getTo()).addInputLink(pipeLinkB, getFrom());
     } catch (ClosedEndException e) {
       throw new MessageFailureException(e);
     }

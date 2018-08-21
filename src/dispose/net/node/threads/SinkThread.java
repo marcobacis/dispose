@@ -36,7 +36,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   
   
   @Override
-  public void setInputLink(Link inputLink, int fromId) throws ClosedEndException
+  public void addInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
     MonitoredLink monlink = new MonitoredLink(inputLink, this);
     inStreams.add(monlink);
@@ -44,7 +44,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
 
 
   @Override
-  public void setOutputLink(Link outputLink, int toId) throws ClosedEndException
+  public void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
     throw new ClosedEndException("this is a data --> SINK <--");
   }

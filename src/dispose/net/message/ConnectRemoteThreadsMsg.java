@@ -88,7 +88,7 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
     SocketLink link;
     try {
       link = SocketLink.connectFrom(port());
-      toop.setInputLink(link, getFrom());
+      toop.addInputLink(link, getFrom());
     } catch (IOException | ClosedEndException e) {
       throw new MessageFailureException(e);
     }
@@ -128,7 +128,7 @@ public class ConnectRemoteThreadsMsg extends CtrlMessage
     }
     
     try {
-      fromop.setOutputLink(link, getTo());
+      fromop.addOutputLink(link, getTo());
     } catch (ClosedEndException e) {
       throw new MessageFailureException(e);
     }

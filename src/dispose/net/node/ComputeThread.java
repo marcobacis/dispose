@@ -19,7 +19,7 @@ public abstract class ComputeThread
    * @param fromId TODO
    * @throws ClosedEndException if the thread cannot accept inputs
    */
-  public abstract void setInputLink(Link inputLink, int fromId) throws ClosedEndException;
+  public abstract void addInputLink(Link inputLink, int fromId) throws ClosedEndException;
   
   
   /**
@@ -28,7 +28,7 @@ public abstract class ComputeThread
    * @param toId TODO
    * @throws ClosedEndException if the thread cannot accept outputs
    */
-  public abstract void setOutputLink(Link outputLink, int toId) throws ClosedEndException;
+  public abstract void addOutputLink(Link outputLink, int toId) throws ClosedEndException;
   
   
   /**

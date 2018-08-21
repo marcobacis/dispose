@@ -70,7 +70,7 @@ public class OperatorThread extends ComputeThread
    * @param inputLink Input link to use
    * @param fromId ID of the upstream operator connected through this link
    * @throws IOException */
-  public synchronized void setInputLink(Link inputLink, int fromId) throws ClosedEndException
+  public synchronized void addInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
     boolean repair = inStreams.containsKey(fromId);
 
@@ -94,7 +94,7 @@ public class OperatorThread extends ComputeThread
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
    * @throws IOException */
-  public synchronized void setOutputLink(Link outputLink, int toId) throws ClosedEndException
+  public synchronized void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
     outLink.setOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
   }

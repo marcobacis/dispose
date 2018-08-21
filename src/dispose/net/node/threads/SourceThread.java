@@ -37,14 +37,14 @@ public class SourceThread extends ComputeThread
 
 
   @Override
-  public void setInputLink(Link inputLink, int fromId) throws ClosedEndException
+  public void addInputLink(Link inputLink, int fromId) throws ClosedEndException
   {
     throw new ClosedEndException("this is a data --> SOURCE <--");
   }
 
 
   @Override
-  public void setOutputLink(Link outputLink, int toId) throws ClosedEndException
+  public void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
     outLink.setOutputLink(outputLink, toId, new SourceDelegate());
   }
