@@ -3,7 +3,7 @@ package dispose.test;
 import java.util.UUID;
 
 import dispose.net.common.types.FloatData;
-import dispose.net.links.PipeLink;
+import dispose.net.links.ObjectFifoLink;
 import dispose.net.node.Node;
 import dispose.net.node.operators.AvgWindowOperator;
 import dispose.net.node.operators.MaxWindowOperator;
@@ -16,17 +16,16 @@ public class OperatorsExerciser
   
   public static void main(String[] args) throws Exception
   {
-
-    PipeLink to = new PipeLink();
-    PipeLink hostMax = new PipeLink();
+    ObjectFifoLink to = new ObjectFifoLink();
+    ObjectFifoLink hostMax = new ObjectFifoLink();
     to.connect(hostMax);
     
-    PipeLink maxAvgA = new PipeLink();
-    PipeLink maxAvgB = new PipeLink();
+    ObjectFifoLink maxAvgA = new ObjectFifoLink();
+    ObjectFifoLink maxAvgB = new ObjectFifoLink();
     maxAvgA.connect(maxAvgB);
     
-    PipeLink avgHost = new PipeLink();
-    PipeLink from  = new PipeLink();
+    ObjectFifoLink avgHost = new ObjectFifoLink();
+    ObjectFifoLink from  = new ObjectFifoLink();
     avgHost.connect(from);
     
     // here -> max(3,1) -> avg(1,1) -> here
@@ -51,15 +50,17 @@ public class OperatorsExerciser
     maxWrapper.start();
     avgWrapper.start();
     
-    for(int i = 0; i < 15; i++) {
+    for (int i = 0; i < 15; i++) {
       to.sendMsg(new FloatData(i));
     }
 
-    
-    while(true) {
+    for (int i=0; i<6; i++) {
       FloatData fd = (FloatData) from.recvMsg();
       System.out.println(fd + "; " + fd.getTimestamp() + "; " + fd.getUUID());
     }
+    
+    maxWrapper.stop();
+    avgWrapper.stop();
   }
 
 }

@@ -24,12 +24,15 @@ public class Node implements Runnable, MonitoredLink.Delegate
   private MonitoredLink ctrlLink;
   private Set<UUID> completedJobs = new HashSet<>();
   
+  
   public Node(Link ctrlLink)
   {
     operators = new HashMap<>();
-    this.ctrlLink = new MonitoredLink(ctrlLink, this);
-    this.ctrlLink.setTimeoutPeriod(Config.heartbeatPeriod * 2);
-    this.ctrlLink.setHeartbeatSendPeriod(Config.heartbeatPeriod);
+    if (ctrlLink != null) {
+      this.ctrlLink = new MonitoredLink(ctrlLink, this);
+      this.ctrlLink.setTimeoutPeriod(Config.heartbeatPeriod * 2);
+      this.ctrlLink.setHeartbeatSendPeriod(Config.heartbeatPeriod);
+    }
   }
 
   
