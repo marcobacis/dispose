@@ -69,6 +69,7 @@ public class CheckpointArchive
     Map<Integer, OperatorCheckpoint> ckp = checkpoints.get(ckpId);
     
     leftNodes.remove(checkpointed.getSinkNodeId());
+    leftNodes.remove(checkpointed.getSourceNodeId());
     
     for (Map.Entry<Integer, OperatorCheckpoint> part: ckp.entrySet()) {
       Integer nid = part.getKey();

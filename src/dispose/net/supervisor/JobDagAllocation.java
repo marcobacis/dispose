@@ -18,7 +18,7 @@ import dispose.net.supervisor.JobDag.LinkDescription;
 public class JobDagAllocation
 {
   private JobDag jobDag;
-  private Map<Integer, NodeProxy> logNodeToPhysNode;
+  private Map<Integer, NodeProxy> logNodeToPhysNode = new HashMap<>();
   private Set<Integer> liveLogNodes = new HashSet<>();
   private Set<LinkDescription> liveLinks = new HashSet<>();
   
@@ -117,8 +117,6 @@ public class JobDagAllocation
     List<NodeProxy> physNodes = new ArrayList<>(physNodes0);
     Collections.shuffle(physNodes);
     
-    logNodeToPhysNode = new HashMap<>();
-    
     // TODO: Use a topological ordering to exploit logical node locality
     // TODO: Use an abstract computation power per node metric to perform static load balancing
     int deadNodesCnt = Integer.max(0, jobDag.getNodes().size() - liveLogNodes.size() - 2);
@@ -141,6 +139,8 @@ public class JobDagAllocation
           currPnode = (currPnode + 1) % physNodes.size();
         }
       }
+      
+      liveLogNodes.add(lnode.getID());
     }
     
     updateLiveLinks();
@@ -163,7 +163,7 @@ public class JobDagAllocation
   public void removeDeadPhysicalNodes(Collection<NodeProxy> deadNodes)
   {
     Set<NodeProxy> deadNodesSet = new HashSet<>(deadNodes);
-    Set<Integer> newLiveLogNodes = new HashSet<>(liveLogNodes);
+    Set<Integer> newLiveLogNodes = new HashSet<>();
     
     for (Integer logNode: liveLogNodes) {
       if (!deadNodesSet.contains(logNodeToPhysNode.get(logNode))) {

@@ -10,6 +10,7 @@ import dispose.log.DisposeLog;
 import dispose.net.common.*;
 import dispose.net.common.types.*;
 import dispose.net.links.Link;
+import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink;
 import dispose.net.links.MonitoredLink.Delegate;
 import dispose.net.message.Message;
@@ -60,7 +61,7 @@ public class OperatorThread extends ComputeThread
     for (int d = 0; d < numInputs; d++) {
       inputQueues.add(new ConcurrentLinkedQueue<>());
     }
-    
+
     barrier = new OperatorInputState(inputQueues);
   }
 
@@ -88,7 +89,7 @@ public class OperatorThread extends ComputeThread
     inStreams.put(fromId, MonitoredLink.asyncMonitorLink(inputLink, new OperatorInputDelegate(this, idx), 0));
   }
 
-  
+
   /** Set the output link (there can be many) for the given downstream operator
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
@@ -129,8 +130,7 @@ public class OperatorThread extends ComputeThread
     public void linkIsBroken(Exception e)
     {
       this.op.pause();
-      DisposeLog.error(this, "The ", this.StreamIndex, "th link on operator ",
-        op.getID(), " is broken");
+      DisposeLog.error(this, "The ", this.StreamIndex, "th link on operator ", op.getID(), " is broken");
     }
   }
 
@@ -163,24 +163,23 @@ public class OperatorThread extends ComputeThread
 
   }
 
-  public void reloadFromCheckPoint(OperatorCheckpoint checkpoint) {
-    
+
+  public void reloadFromCheckPoint(OperatorCheckpoint checkpoint)
+  {
     checkpoints.clear();
-    
+
     inputQueues = checkpoint.getInFlight();
     operator = checkpoint.getOperator();
     barrier = checkpoint.getInputState();
-    
   }
+
 
   /** Starts the operator, by starting all the links monitors and queues */
   @Override
   public void start()
   {
     this.running.set(true);
-    
-    this.processThread = new Thread(() -> process());
-    processThread.start();
+    recreateThread();
   }
 
 
@@ -200,8 +199,14 @@ public class OperatorThread extends ComputeThread
   public void resume()
   {
     this.running.set(true);
-    
+    recreateThread();
+  }
+  
+  
+  private void recreateThread()
+  {
     processThread = new Thread(() -> process());
+    processThread.setName("operator-" + Integer.toString(this.getID()));
     processThread.start();
   }
 
@@ -213,10 +218,10 @@ public class OperatorThread extends ComputeThread
     running.set(false);
 
     barrier.forceStop();
-    
+
     for (MonitoredLink inLink : inStreams.values())
       inLink.close();
-    
+
     outLink.close();
     
     try{
@@ -268,10 +273,9 @@ public class OperatorThread extends ComputeThread
 
       // forwards checkpoint message to all downstream operators
       try {
-          outLink.sendMsg(msg);
+        outLink.sendMsg(msg);
       } catch (Exception e) {
-        DisposeLog.error(this, "Exception while processing checkpoint message ",
-          e.getMessage());
+        DisposeLog.error(this, "Exception while processing checkpoint message ", e.getMessage());
         e.printStackTrace();
       }
 
@@ -281,9 +285,7 @@ public class OperatorThread extends ComputeThread
 
     if (current.isComplete()) {
       DisposeLog.debug(OperatorThread.class,
-        "Checkpoint " + current.getID() + " completed on operator "
-                                             + this.operator.getID() + ": "
-                                             + current);
+        "Checkpoint " + current.getID() + " completed on operator " + this.operator.getID() + ": " + current);
 
       owner.sendMsgToSupervisor(getID(), new ChkpResponseMsg(current));
 
@@ -291,17 +293,17 @@ public class OperatorThread extends ComputeThread
     }
   }
 
-  
+
   /** Main loop of the thread. Gets the control commands and runs the operator
    * on each new data on the input link. */
   private void process()
   {
     while (this.running.get()) {
-      
+
       // I/O processing
       try {
         DataAtom[] inputAtoms = barrier.recvAtomsBlocking();
-        
+
         if (barrier.stopCondition()) {
           DisposeLog.debug(this, "Operator ", getID(), " received EndData");
           outLink.sendMsg(new EndData());
@@ -312,18 +314,17 @@ public class OperatorThread extends ComputeThread
           List<DataAtom> result = this.operator.processAtom(inputAtoms);
 
           // sends non-null results to all the children streams
-            for (DataAtom resAtom : result) {
-              if (resAtom != null && !(resAtom instanceof NullData)) {
-                outLink.sendMsg(resAtom);
-              }
+          for (DataAtom resAtom : result) {
+            if (resAtom != null && !(resAtom instanceof NullData)) {
+              outLink.sendMsg(resAtom);
+            }
           }
 
           barrier.resetAfterProcessing();
         }
 
-      } catch (Exception e) {
-        DisposeLog.error(this, "Exception while processing ", e.getMessage());
-        e.printStackTrace();
+      } catch (LinkBrokenException e) {
+        DisposeLog.error(this, "link lost; exc = ", e);
       }
     }
   }

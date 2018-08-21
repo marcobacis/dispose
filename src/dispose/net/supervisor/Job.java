@@ -21,6 +21,7 @@ import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
 import dispose.net.message.ThreadCommandMsg;
 import dispose.net.message.chkp.ChkpRequestMsg;
+import dispose.net.message.chkp.DeployOperatorFromChkpMsg;
 import dispose.net.node.ComputeNode;
 import dispose.net.node.OperatorCheckpoint;
 import dispose.net.node.datasinks.DataSink;
@@ -38,6 +39,16 @@ public class Job implements LogInfo
   private JobDag jobDag;
   private JobDagAllocation allocation;
   private CheckpointArchive checkpoints;
+  private Status status;
+  
+  
+  private enum Status
+  {
+    SETUP,
+    RUN,
+    RECOVERY,
+    KILLED
+  }
   
   
   /* TODO: retry on failure with retry count */
@@ -51,6 +62,7 @@ public class Job implements LogInfo
     this.supervis = supervis;
     this.owner = owner;
     this.checkpoints = new CheckpointArchive();
+    this.status = Status.SETUP;
   }
   
   
@@ -78,16 +90,14 @@ public class Job implements LogInfo
   public void materialize() throws LinkBrokenException, ResourceUnderrunException
   {
     allocation.allocateAllNodes(supervis.getNodes(), owner);
-    materializeAllNodes();
+    materializeNodes(jobDag.getNodes());
     materializeLocalLinks(allocation.localLinks());
     materializeRemoteLinks(allocation.remoteLinks());
   }
   
   
-  private void materializeAllNodes() throws LinkBrokenException
+  private void materializeNodes(Collection<ComputeNode> logNodes) throws LinkBrokenException
   {
-    Collection<ComputeNode> logNodes = jobDag.getNodes();
-    
     for (ComputeNode logNode: logNodes) {
       NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
       CtrlMessage msg;
@@ -154,6 +164,7 @@ public class Job implements LogInfo
   
   public void start() throws LinkBrokenException
   {
+    status = Status.RUN;
     sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.START, false);
   }
   
@@ -172,6 +183,7 @@ public class Job implements LogInfo
   
   public void kill()
   {
+    status = Status.KILLED;
     try {
       sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.STOP, true);
     } catch (LinkBrokenException e) { }
@@ -185,9 +197,18 @@ public class Job implements LogInfo
   
   private void sendCommandToAllLogicalNodes(ThreadCommandMsg.Command cmd, boolean ignoreDead) throws LinkBrokenException
   {
+    sendCommandToLogicalNodes(allocation.getLiveLogicalNodes(), cmd, ignoreDead);
+  }
+  
+  
+  private void sendCommandToLogicalNodes(Collection<Integer> allowedLNodes, ThreadCommandMsg.Command cmd, boolean ignoreDead) throws LinkBrokenException
+  {
     Set<NodeProxy> pnodes = new HashSet<>(allocation.livePhysicalNodes());
     for (NodeProxy pnode: pnodes) {
       Collection<Integer> lnodes = allocation.logicalNodesHostedInPhysicalNode(pnode);
+      Set<Integer> restLNodes = new HashSet<>(lnodes);
+      restLNodes.retainAll(allowedLNodes);
+      
       CtrlMessage cmsg = new ThreadCommandMsg(lnodes, cmd);
       try {
         pnode.getLink().sendMsg(cmsg);
@@ -207,6 +228,73 @@ public class Job implements LogInfo
     if (np == owner) {
       DisposeLog.critical(this, "the owner has died; garbage-collecting the rest of the job");
       kill();
+      return;
+    }
+    
+    if (status == Status.RECOVERY)
+      return;
+    status = Status.RECOVERY;
+    
+    int srcid = jobDag.getSourceNodeId();
+    Set<Integer> otherNodes = new HashSet<>(allocation.getLiveLogicalNodes());
+    otherNodes.remove(srcid);
+    
+    NodeProxy source = allocation.getPhysicalNodeHostingLogicalNodeId(srcid);
+    try {
+      ThreadCommandMsg srcsuspend = new ThreadCommandMsg(srcid, ThreadCommandMsg.Command.SUSPEND);
+      source.getLink().sendMsgAndRequestAck(srcsuspend);
+      source.getLink().waitAck(srcsuspend);
+      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false);
+    } catch (LinkBrokenException | NotAcknowledgeableException e) { 
+      DisposeLog.error(this, "cannot suspend source; exc = ", e);
+    }
+    attemptRecovery();
+  }
+  
+  
+  private void attemptRecovery()
+  {
+    DisposeLog.critical(this, "attempting a recover");
+    
+    UUID ckp = checkpoints.getLatestCompleteCheckpointId(jobDag);
+    if (ckp == null) {
+      DisposeLog.error(this, "no eligible checkpoint found");
+      return;
+    }
+    
+    Set<LinkDescription> linksAlreadyAlive = allocation.getLiveLinks();
+    
+    try {
+      allocation.allocateMissingNodes(supervis.getNodes(), owner);
+    } catch (ResourceUnderrunException e) {
+      DisposeLog.critical(this, "recover failure; not enough nodes left");
+      return;
+    }
+    
+    try {
+      restoreStateFromCheckpoint(jobDag.getNodes(), ckp);
+    } catch (LinkBrokenException e1) {
+      DisposeLog.error("could not restore checkpoint", ckp, "; exc = ", e1);
+    }
+    
+    Set<LinkDescription> newLocalLinks = new HashSet<>(allocation.localLinks());
+    newLocalLinks.removeAll(linksAlreadyAlive);
+    Set<LinkDescription> newRemoteLinks = new HashSet<>(allocation.remoteLinks());
+    newRemoteLinks.removeAll(linksAlreadyAlive);
+    
+    try {
+      materializeLocalLinks(newLocalLinks);
+      materializeRemoteLinks(newRemoteLinks);
+    } catch (LinkBrokenException e) {
+      DisposeLog.critical(this, "could not restore links; exc = ", e);
+      return;
+    }
+    
+    try {
+      sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.RESUME, false);
+      status = Status.RUN;
+    } catch (LinkBrokenException e) {
+      DisposeLog.critical(this, "could not restart job after restore; exc = ", e);
     }
   }
   
@@ -232,5 +320,27 @@ public class Job implements LogInfo
     checkpoints.addCheckpointPart(ckpid, part);
     DisposeLog.info(this, "reclaimed ckp ", ckpid, " part opid=", part.getOperator().getID());
     return true;
+  }
+  
+  
+  private void restoreStateFromCheckpoint(Collection<ComputeNode> logNodes, UUID ckpid) throws LinkBrokenException
+  {
+    for (ComputeNode logNode: logNodes) {
+      NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
+      
+      OperatorCheckpoint ckp = checkpoints.getCheckpointPart(ckpid, logNode.getID());
+      if (ckp == null)
+        /* sink */
+        continue;
+      
+      CtrlMessage msg = new DeployOperatorFromChkpMsg(ckp);
+      physNode.getLink().sendMsgAndRequestAck(msg);
+      // TODO: wait acks after sending all the messages
+      try {
+        physNode.getLink().waitAck(msg);
+      } catch (NotAcknowledgeableException e) {
+        e.printStackTrace();
+      }
+    }
   }
 }
