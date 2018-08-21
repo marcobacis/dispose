@@ -189,6 +189,7 @@ public class OperatorThread extends ComputeThread
   @Override
   public void pause()
   {
+    DisposeLog.debug(this, "Operator ", opID, " paused");
     this.running.set(false);
   }
 
@@ -208,11 +209,8 @@ public class OperatorThread extends ComputeThread
   @Override
   public void stop()
   {
-    running.set(false);
     
-    try{
-      processThread.join();
-    } catch (InterruptedException e) { /* Who cares */ }
+    running.set(false);
 
     barrier.forceStop();
     
@@ -220,6 +218,12 @@ public class OperatorThread extends ComputeThread
       inLink.close();
     
     outLink.close();
+    
+    try{
+      processThread.join();
+    } catch (InterruptedException e) { /* Who cares */ }
+    
+    DisposeLog.debug(this, "Operator ", opID, " stopped");
   }
 
 
@@ -299,8 +303,9 @@ public class OperatorThread extends ComputeThread
         DataAtom[] inputAtoms = barrier.recvAtomsBlocking();
         
         if (barrier.stopCondition()) {
+          DisposeLog.debug(this, "Operator ", getID(), " received EndData");
           outLink.sendMsg(new EndData());
-          stop();
+          pause();
           
         } else if (barrier.processCondition()) {
           // process the inputs

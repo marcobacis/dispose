@@ -12,6 +12,7 @@ import dispose.log.LogInfo;
 import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.AckType;
 import dispose.net.links.NotAcknowledgeableException;
+import dispose.net.message.CompletedJobMsg;
 import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.ConnectThreadsMsg;
 import dispose.net.message.CtrlMessage;
@@ -156,12 +157,25 @@ public class Job implements LogInfo
     sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.START, false);
   }
   
+  public void completed()
+  {
+    DisposeLog.info(this, "Completed job " + id);
+    CompletedJobMsg msg = new CompletedJobMsg(id);
+    try{
+      owner.getLink().sendMsgAndRequestAck(msg);
+    } catch (LinkBrokenException e) {
+      
+    }
+    
+    kill();
+  }
   
   public void kill()
   {
     try {
       sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.STOP, true);
     } catch (LinkBrokenException e) { }
+    
     allocation.removeDeadPhysicalNodes(allocation.livePhysicalNodes());
     
     DisposeLog.info(this, "this task has been killed");

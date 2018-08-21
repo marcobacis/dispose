@@ -80,7 +80,7 @@ public class OperatorInputState implements Serializable
       }
     }
     
-    return recvAtoms();
+    return ret;
   }
   
   

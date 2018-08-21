@@ -1,10 +1,8 @@
 package dispose.client;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
@@ -18,6 +16,7 @@ import dispose.net.message.CtrlMessage;
 import dispose.net.message.JobCommandMsg;
 import dispose.net.message.JobCommandMsg.Command;
 import dispose.net.node.Node;
+import dispose.net.supervisor.LocalSupervisor;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 import dispose.test.ExampleJob;
@@ -30,6 +29,9 @@ public class Context
   private boolean ready = false;
   
   private Node localNode;
+  private Supervisor localSupervisor;
+  private Thread localSupervisorThread;
+  private Thread localNodeThread;
   private Link ctrlLink;
   
   public Context()
@@ -64,18 +66,22 @@ public class Context
   
   private void initializeRemote() throws UnknownHostException, IOException
   {
+    remoteSup = true;
+    
     System.out.println(remoteSupervisorAddress);
     ctrlLink = SocketLink.connectTo(remoteSupervisorAddress, Config.nodeCtrlPort);
     localNode = new Node(ctrlLink);
-    Thread nodeThread = new Thread(localNode);
-    nodeThread.start();
+    localNodeThread = new Thread(localNode);
+    localNodeThread.start();
   }
   
   private void initializeLocal() throws LinkBrokenException
   {
-    Supervisor localSupervisor = new Supervisor();
-    Thread supvThread = new Thread(localSupervisor);
-    supvThread.start();
+    remoteSup = false;
+    
+    localSupervisor = new LocalSupervisor();
+    localSupervisorThread = new Thread(localSupervisor);
+    localSupervisorThread.start();
     ObjectFifoLink _localLinkA = new ObjectFifoLink();
     ObjectFifoLink _localLinkB = new ObjectFifoLink();
     _localLinkA.connect(_localLinkB);
@@ -83,12 +89,12 @@ public class Context
     ctrlLink = _localLinkA;
     
     localNode = new Node(ctrlLink);
-    Thread nodeThread = new Thread(localNode);
-    nodeThread.start();
+    localNodeThread = new Thread(localNode);
+    localNodeThread.start();
     localSupervisor.registerNode(new NodeProxy(localSupervisor, _localLinkB, NodeProxy.LOCAL_NETWORK_ADDRESS));
   }
   
-  public void run(Stream consumer) throws LinkBrokenException, NotAcknowledgeableException
+  public void run(Stream consumer) throws LinkBrokenException, NotAcknowledgeableException, InterruptedException
   {
     if(!ready) {
       DisposeLog.critical(this, "The job is not reay due to errors. Restart the application to try again.");
@@ -109,12 +115,17 @@ public class Context
     DisposeLog.info(ExampleJob.class, "the dag has been instantiated!");
     DisposeLog.debug(ExampleJob.class, compDag);
     
-    //TODO change in order to wait for a EndJobMessage on the control link
-    while(true) {
-      try {
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) { /* Do nothing */ }
+    localNode.waitJobCompleted(jobid);
+    
+    // TODO if not remote, wait for the local supervisor thread to die
+    // other TODO : check that the local node thread joins!
+    if(!remoteSup) {
+      //something to stop the supervisor goes here
+      localSupervisorThread.join();
     }
+    localNodeThread.join();
+    
+    DisposeLog.info(this, "The End");
   }
   
 }

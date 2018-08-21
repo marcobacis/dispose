@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
@@ -21,7 +22,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
 {
   private Map<Integer, ComputeThread> operators;
   private MonitoredLink ctrlLink;
-  
+  private Set<UUID> completedJobs = new HashSet<>();
   
   public Node(Link ctrlLink)
   {
@@ -110,6 +111,26 @@ public class Node implements Runnable, MonitoredLink.Delegate
     }
   }
   
+  public void notifyCompletedJob(UUID jid)
+  {
+    synchronized (this) {
+      completedJobs.add(jid);
+      notifyAll();
+    }
+  }
+  
+  public void waitJobCompleted(UUID jid) throws InterruptedException
+  {
+    if(!completedJobs.contains(jid)) {
+      while (!completedJobs.contains(jid)) {
+        synchronized (this) {
+          wait();
+        }
+      }
+      completedJobs.remove(jid);
+    }
+      
+  }
   
   private void teardown()
   {

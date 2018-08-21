@@ -53,7 +53,8 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   @Override
   public void pause()
   {
-    running.set(false); 
+    running.set(false);
+    DisposeLog.debug(this, "Sink thread paused");
   }
   
   @Override
@@ -82,6 +83,8 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
     }
     
     dataSink.end();
+    
+    DisposeLog.debug(this, "Sink thread stopped");
   }
 
   @Override
@@ -89,8 +92,10 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   {
     if(msg instanceof EndData) {
       DisposeLog.debug(this, "End data received at the sink");
-      JobCommandMsg endMsg = new JobCommandMsg(jid, Command.KILL);
+      JobCommandMsg endMsg = new JobCommandMsg(jid, Command.COMPLETE);
       owner.sendMsgToSupervisor(opID, endMsg);
+      pause();
+      
     } else if(msg instanceof DataAtom) {
       DataAtom da = (DataAtom)msg;
       dataSink.processAtom(da);

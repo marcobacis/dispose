@@ -22,7 +22,8 @@ public class JobCommandMsg extends CtrlMessage
   public enum Command
   {
     START,
-    KILL
+    KILL,
+    COMPLETE
   }
   
   
@@ -50,6 +51,12 @@ public class JobCommandMsg extends CtrlMessage
             exc2 = e;
           }
           return exc2;
+        };
+        break;
+      case COMPLETE:
+        jfunc = (Job job) -> {
+          job.completed();
+          return null;
         };
         break;
       case KILL:
