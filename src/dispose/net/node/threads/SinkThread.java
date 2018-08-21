@@ -2,12 +2,16 @@ package dispose.net.node.threads;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
+import dispose.net.common.types.EndData;
 import dispose.net.links.Link;
 import dispose.net.links.MonitoredLink;
+import dispose.net.message.JobCommandMsg;
+import dispose.net.message.JobCommandMsg.Command;
 import dispose.net.message.Message;
 import dispose.net.message.chkp.ChkpCompletedMessage;
 import dispose.net.message.chkp.ChkpRequestMsg;
@@ -20,12 +24,13 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   private DataSink dataSink;
   private List<MonitoredLink> inStreams = new ArrayList<>();
   private AtomicBoolean running = new AtomicBoolean(true);
+  private UUID jid;
   
-  
-  public SinkThread(Node owner, DataSink dataSink)
+  public SinkThread(Node owner, UUID jid, DataSink dataSink)
   {
     super(owner);
     this.dataSink = dataSink;
+    this.jid = jid;
     this.opID = dataSink.getID();
   }
   
@@ -82,7 +87,11 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   @Override
   public void messageReceived(Message msg)
   {
-    if(msg instanceof DataAtom) {
+    if(msg instanceof EndData) {
+      DisposeLog.debug(this, "End data received at the sink");
+      JobCommandMsg endMsg = new JobCommandMsg(jid, Command.KILL);
+      owner.sendMsgToSupervisor(opID, endMsg);
+    } else if(msg instanceof DataAtom) {
       DataAtom da = (DataAtom)msg;
       dataSink.processAtom(da);
     } else if(msg instanceof ChkpRequestMsg) {

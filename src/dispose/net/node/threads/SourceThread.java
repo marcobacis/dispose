@@ -2,6 +2,7 @@ package dispose.net.node.threads;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,11 +22,12 @@ public class SourceThread extends ComputeThread
   private AtomicBoolean running = new AtomicBoolean(false);
   private AtomicBoolean paused = new AtomicBoolean(false);
   private LinkedBlockingQueue<Message> injectQueue = new LinkedBlockingQueue<>();
+  private UUID jid;
   
-  
-  public SourceThread(Node owner, DataSource dataSource)
+  public SourceThread(Node owner, UUID jid, DataSource dataSource)
   {
     super(owner);
+    this.jid = jid;
     this.dataSource = dataSource;
     this.opID = dataSource.getID();
   }

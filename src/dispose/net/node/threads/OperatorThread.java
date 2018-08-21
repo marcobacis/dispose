@@ -25,6 +25,7 @@ import dispose.net.node.operators.Operator;
  * each operator on the node, and the threads are linked by using Links. */
 public class OperatorThread extends ComputeThread
 {
+  private UUID jid;
   private Operator operator;
 
   private HashMap<Integer, MonitoredLink> inStreams = new HashMap<>();
@@ -45,11 +46,12 @@ public class OperatorThread extends ComputeThread
   private Thread processThread;
   
   
-  public OperatorThread(Node owner, Operator operator)
+  public OperatorThread(Node owner, UUID jid, Operator operator)
   {
     super(owner);
     this.operator = operator;
     this.opID = operator.getID();
+    this.jid = jid;
     
     int numInputs = operator.getNumInputs();
 

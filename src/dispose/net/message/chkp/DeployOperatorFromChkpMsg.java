@@ -1,6 +1,8 @@
 
 package dispose.net.message.chkp;
 
+import java.util.UUID;
+
 import dispose.net.message.CtrlMessage;
 import dispose.net.node.Node;
 import dispose.net.node.OperatorCheckpoint;
@@ -15,11 +17,13 @@ public class DeployOperatorFromChkpMsg extends CtrlMessage
 
   private static final long serialVersionUID = 6569246127640196223L;
   private OperatorCheckpoint checkpoint;
+  private UUID jid;
 
 
-  public DeployOperatorFromChkpMsg(OperatorCheckpoint chkp)
+  public DeployOperatorFromChkpMsg(UUID jid, OperatorCheckpoint chkp)
   {
     checkpoint = chkp;
+    this.jid = jid;
   }
 
 
@@ -30,7 +34,7 @@ public class DeployOperatorFromChkpMsg extends CtrlMessage
     OperatorThread op = ((OperatorThread) node.getComputeThread(opID));
 
     if (op == null) {
-      op = new OperatorThread(node, checkpoint.getOperator());
+      op = new OperatorThread(node, jid, checkpoint.getOperator());
       node.addComputeThread(opID, op);
     }
 

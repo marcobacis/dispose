@@ -1,5 +1,7 @@
 package dispose.test;
 
+import java.util.UUID;
+
 import dispose.net.common.types.FloatData;
 import dispose.net.links.PipeLink;
 import dispose.net.node.Node;
@@ -34,9 +36,11 @@ public class OperatorsExerciser
     Operator avg = new AvgWindowOperator(2, 2, 2);
     
     Node node = new Node(null);
-   
-    OperatorThread maxWrapper = new OperatorThread(node, max);
-    OperatorThread avgWrapper = new OperatorThread(node, avg);
+  
+    UUID jid = UUID.randomUUID();
+    
+    OperatorThread maxWrapper = new OperatorThread(node, jid, max);
+    OperatorThread avgWrapper = new OperatorThread(node, jid, avg);
     
     maxWrapper.setInputLink(hostMax, 0);
     maxWrapper.setOutputLink(maxAvgA, avg.getID());

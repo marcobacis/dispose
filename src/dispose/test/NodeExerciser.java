@@ -1,12 +1,13 @@
 package dispose.test;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import dispose.net.links.ObjectFifoLink;
+import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.ConnectThreadsMsg;
 import dispose.net.message.DeployDataSinkThreadMsg;
 import dispose.net.message.DeployDataSourceThreadMsg;
-import dispose.net.message.ConnectRemoteThreadsMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
 import dispose.net.message.ThreadCommandMsg;
 import dispose.net.node.Node;
@@ -44,10 +45,12 @@ public class NodeExerciser
     Operator avg = new AvgWindowOperator(2, 2, 2);
     DataSink printer = new ObjectLogDataSink(101);
     
-    ctrl0A.sendMsg(new DeployDataSourceThreadMsg(rand));
-    ctrl0A.sendMsg(new DeployOperatorThreadMsg(max));
-    ctrl1A.sendMsg(new DeployOperatorThreadMsg(avg));
-    ctrl1A.sendMsg(new DeployDataSinkThreadMsg(printer));
+    UUID dummyJid = UUID.randomUUID();
+    
+    ctrl0A.sendMsg(new DeployDataSourceThreadMsg(dummyJid, rand));
+    ctrl0A.sendMsg(new DeployOperatorThreadMsg(dummyJid, max));
+    ctrl1A.sendMsg(new DeployOperatorThreadMsg(dummyJid, avg));
+    ctrl1A.sendMsg(new DeployDataSinkThreadMsg(dummyJid, printer));
     
     ctrl0A.sendMsg(new ConnectThreadsMsg(rand.getID(), max.getID()));
     ctrl0A.sendMsg(new ConnectRemoteThreadsMsg(max.getID(), avg.getID(), "127.0.0.1", 9003));

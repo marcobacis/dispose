@@ -91,11 +91,11 @@ public class Job implements LogInfo
       NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
       CtrlMessage msg;
       if (logNode instanceof DataSink) {
-        msg = new DeployDataSinkThreadMsg((DataSink) logNode);
+        msg = new DeployDataSinkThreadMsg(getID(), (DataSink) logNode);
       } else if (logNode instanceof DataSource) {
-        msg = new DeployDataSourceThreadMsg((DataSource) logNode);
+        msg = new DeployDataSourceThreadMsg(getID(), (DataSource) logNode);
       } else {
-        msg = new DeployOperatorThreadMsg((Operator) logNode);
+        msg = new DeployOperatorThreadMsg(getID(), (Operator) logNode);
       }
       physNode.getLink().sendMsgAndRequestAck(msg);
       // TODO: wait acks after sending all the messages
