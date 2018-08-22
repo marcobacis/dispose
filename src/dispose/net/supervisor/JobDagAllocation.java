@@ -5,10 +5,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import dispose.net.node.ComputeNode;
 import dispose.net.node.datasinks.DataSink;
@@ -173,5 +175,25 @@ public class JobDagAllocation
     
     liveLogNodes = newLiveLogNodes;
     updateLiveLinks();
+  }
+  
+  @Override
+  public String toString()
+  {    
+    List<Integer> physNodes = logNodeToPhysNode.values().stream().map((node) -> node.nodeID()).distinct().collect(Collectors.toList());
+    
+    List<String> nodes = new ArrayList<>(physNodes.size());
+    
+    for(Integer node : physNodes) {
+      
+      List<String> ops = new LinkedList<>();
+      for(Integer op : liveLogNodes)
+        if(logNodeToPhysNode.get(op).nodeID() == node)
+          ops.add(Integer.toString(op));
+      
+        nodes.add("(" + Integer.toHexString(node) + ": " + String.join(",", ops) + ")");
+    }
+    
+    return String.join(",", nodes);
   }
 }

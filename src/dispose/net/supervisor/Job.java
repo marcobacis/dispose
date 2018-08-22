@@ -93,6 +93,9 @@ public class Job implements LogInfo
     materializeNodes(jobDag.getNodes());
     materializeLocalLinks(allocation.localLinks());
     materializeRemoteLinks(allocation.remoteLinks());
+    
+    DisposeLog.debug(this, "Job ", id, " materialized");
+    DisposeLog.debug(this, allocation.toString());
   }
   
   
