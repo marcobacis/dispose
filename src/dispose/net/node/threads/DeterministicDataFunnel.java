@@ -1,6 +1,7 @@
 package dispose.net.node.threads;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -9,7 +10,12 @@ import dispose.net.common.types.EndData;
 import dispose.net.common.types.FloatData;
 import dispose.net.common.types.NullData;
 
-public class OperatorInputState implements Serializable
+
+/** A class which deterministically funnels N DataAtoms at once from N producers 
+ * to a single consumer. The DataAtoms are ordered FIFO with respect to data
+ * atoms received from the same producer, and in producer index number order
+ * with respect to data atoms received from different producers. */
+public class DeterministicDataFunnel implements Serializable
 {
   private static final long serialVersionUID = 5354298488928186074L;
   private int numInputs;
@@ -20,10 +26,13 @@ public class OperatorInputState implements Serializable
   private boolean killFlag = false;
   
   
-  public OperatorInputState(List<ConcurrentLinkedQueue<DataAtom>> inQueues)
+  public DeterministicDataFunnel(int numInputs)
   {
-    this.inputQueues = inQueues;
-    this.numInputs = inQueues.size();
+    this.numInputs = numInputs;
+    inputQueues = new ArrayList<>(numInputs);
+    for (int d = 0; d < numInputs; d++) {
+      inputQueues.add(new ConcurrentLinkedQueue<>());
+    }
     
     inputAtoms = new DataAtom[numInputs];
     readyAtoms = new Boolean[numInputs];
@@ -37,7 +46,29 @@ public class OperatorInputState implements Serializable
   }
   
   
-  public DataAtom[] recvAtoms()
+  public void restoreState(List<ConcurrentLinkedQueue<DataAtom>> qstate)
+  {
+    inputQueues = new ArrayList<>(qstate);
+    
+    for (int d = 0; d < numInputs; d++) {
+      inputAtoms[d] = new NullData();
+      readyAtoms[d] = false;
+      endAtoms[d] = false;
+    }
+  }
+  
+  
+  /** Puts a data atom from a specific producer into the funnel.
+   * @param idx The index number of the producer
+   * @param element The data atom to funnel */
+  public synchronized void receivedAtom(int idx, DataAtom element)
+  {
+    this.inputQueues.get(idx).offer(element);
+    this.notify();
+  }
+  
+  
+  public DataAtom[] getAtoms()
   {
     for (int i = 0; i < inputAtoms.length; i++) {
       if (!readyAtoms[i]) {
@@ -63,9 +94,9 @@ public class OperatorInputState implements Serializable
   }
   
   
-  public DataAtom[] recvAtomsBlocking()
+  public DataAtom[] getAtomsBlocking()
   {
-    DataAtom[] ret = recvAtoms();
+    DataAtom[] ret = getAtoms();
     
     if(!unblockCondition()){
       synchronized(this) {
@@ -75,7 +106,7 @@ public class OperatorInputState implements Serializable
           } catch (InterruptedException e) {
             return ret;
           }
-          ret = recvAtoms();
+          ret = getAtoms();
         }
       }
     }
@@ -86,15 +117,13 @@ public class OperatorInputState implements Serializable
   
   private boolean unblockCondition()
   {
-    return stopCondition() || processCondition();
+    return stopCondition() || processCondition() || killFlag;
   }
   
   
+  /** @returns true if an EndData atom has been received from all producers */
   public boolean stopCondition()
   {
-    if (killFlag)
-      return true;
-    
     boolean stopCondition = true;
     for(Boolean end : endAtoms)
       stopCondition &= end;
@@ -103,6 +132,7 @@ public class OperatorInputState implements Serializable
   }
   
   
+  /** @returns true if there is a data atom available from all the producers */
   public boolean processCondition()
   {
     boolean condition = true;
@@ -124,6 +154,9 @@ public class OperatorInputState implements Serializable
   }
   
   
+  /** Interrupts getAtomsBlocking() even if not all DataAtoms have been
+   * properly received. After this method has been called, the funnel cannot
+   * be used anymore. */
   synchronized public void forceStop()
   {
     killFlag = true;

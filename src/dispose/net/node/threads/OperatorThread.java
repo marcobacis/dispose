@@ -3,7 +3,6 @@ package dispose.net.node.threads;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
@@ -33,12 +32,8 @@ public class OperatorThread extends ComputeThread
   private OperatorBroadcast outLink = new OperatorBroadcast();
 
   HashMap<Integer, Integer> opIDtoLinkIdx = new HashMap<>();
-
   private int lastInputIdx = 0;
-
-  private OperatorInputState barrier;
-
-  private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
+  private DeterministicDataFunnel barrier;
 
   private HashMap<UUID, OperatorCheckpoint> checkpoints = new HashMap<>();
 
@@ -55,14 +50,7 @@ public class OperatorThread extends ComputeThread
     this.jid = jid;
     
     int numInputs = operator.getNumInputs();
-
-    inputQueues = new ArrayList<>(numInputs);
-
-    for (int d = 0; d < numInputs; d++) {
-      inputQueues.add(new ConcurrentLinkedQueue<>());
-    }
-
-    barrier = new OperatorInputState(inputQueues);
+    barrier = new DeterministicDataFunnel(numInputs);
   }
 
 
@@ -168,9 +156,9 @@ public class OperatorThread extends ComputeThread
   {
     checkpoints.clear();
 
-    inputQueues = checkpoint.getInFlight();
     operator = checkpoint.getOperator();
-    barrier = checkpoint.getInputState();
+    barrier = new DeterministicDataFunnel(operator.getNumInputs());
+    barrier.restoreState(checkpoint.getInFlight());
   }
 
 
@@ -188,8 +176,12 @@ public class OperatorThread extends ComputeThread
   @Override
   public void pause()
   {
+    if (!this.running.get())
+      return;
+    
     DisposeLog.debug(this, "Operator ", opID, " paused");
     this.running.set(false);
+    barrier.forceStop();
   }
 
 
@@ -214,7 +206,6 @@ public class OperatorThread extends ComputeThread
   @Override
   public void stop()
   {
-    
     running.set(false);
 
     barrier.forceStop();
@@ -239,10 +230,7 @@ public class OperatorThread extends ComputeThread
   private void notifyElement(int idx, DataAtom element)
   {
     if (element != null) {
-      this.inputQueues.get(idx).offer(element);
-      synchronized (barrier) {
-        barrier.notify();
-      }
+      barrier.receivedAtom(idx, element);
 
       // adds value to all current checkpoints
       if (!checkpoints.isEmpty()) {
@@ -302,7 +290,7 @@ public class OperatorThread extends ComputeThread
 
       // I/O processing
       try {
-        DataAtom[] inputAtoms = barrier.recvAtomsBlocking();
+        DataAtom[] inputAtoms = barrier.getAtomsBlocking();
 
         if (barrier.stopCondition()) {
           DisposeLog.debug(this, "Operator ", getID(), " received EndData");

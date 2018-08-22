@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import dispose.net.common.DataAtom;
 import dispose.net.common.DeepCopy;
 import dispose.net.node.operators.Operator;
-import dispose.net.node.threads.OperatorInputState;
+import dispose.net.node.threads.DeterministicDataFunnel;
 
 
 public class OperatorCheckpoint implements Serializable
@@ -28,16 +28,14 @@ public class OperatorCheckpoint implements Serializable
   private UUID id;
   private Operator op;
   private List<ConcurrentLinkedQueue<DataAtom>> inFlight;
-  private OperatorInputState inputState;
   private boolean[] checked;
 
 
   public OperatorCheckpoint(UUID id, Operator operator,
-    OperatorInputState inputState)
+    DeterministicDataFunnel inputState)
   {
     this.id = id;
     this.op = (Operator) DeepCopy.copy(operator);
-    this.inputState = (OperatorInputState) DeepCopy.copy(inputState);
     this.inFlight = new ArrayList<>(op.getNumInputs());
     this.checked = new boolean[op.getNumInputs()];
     for (int i = 0; i < op.getNumInputs(); i++) {
@@ -122,12 +120,6 @@ public class OperatorCheckpoint implements Serializable
       completed &= check;
 
     return completed;
-  }
-
-
-  public OperatorInputState getInputState()
-  {
-    return inputState;
   }
 
 
