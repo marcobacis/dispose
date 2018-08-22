@@ -12,8 +12,12 @@ import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.Delegate;
 import dispose.net.message.Message;
 import dispose.net.message.MessageFailureException;
+import dispose.net.message.chkp.ChkpRequestMsg;
+import dispose.net.message.chkp.ChkpResponseMsg;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
+import dispose.net.node.checkpoint.Checkpoint;
+import dispose.net.node.checkpoint.DataSourceCheckpoint;
 import dispose.net.node.datasources.DataSource;
 
 
@@ -25,13 +29,11 @@ public class SourceThread extends ComputeThread
   private AtomicBoolean running = new AtomicBoolean(false);
   private AtomicBoolean paused = new AtomicBoolean(false);
   private LinkedBlockingQueue<Message> injectQueue = new LinkedBlockingQueue<>();
-  private UUID jid;
 
   
   public SourceThread(Node owner, UUID jid, DataSource dataSource)
   {
-    super(owner);
-    this.jid = jid;
+    super(owner, jid);
     this.dataSource = dataSource;
     this.opID = dataSource.getID();
   }
@@ -123,18 +125,24 @@ public class SourceThread extends ComputeThread
         }
       }
 
-      Message d = injectQueue.poll();
-      if (d == null)
-        d = dataSource.nextAtom();
+      Message msg = injectQueue.poll();
+      if (msg == null)
+        msg = dataSource.nextAtom();
+      
+      if(msg instanceof ChkpRequestMsg) {
+        ChkpRequestMsg req = (ChkpRequestMsg) msg;
+        DataSourceCheckpoint chkp = new DataSourceCheckpoint(req.getCheckpointID(), dataSource, injectQueue);
+        owner.sendMsgToSupervisor(opID, new ChkpResponseMsg(chkp));
+      }
       
       try {
-        outLink.sendMsg(d);
+        outLink.sendMsg(msg);
       } catch (LinkBrokenException e) {
         DisposeLog.error(this, "we've lost a link; exc = ", e, "; pausing");
         pause();
       }
       
-      if (d instanceof EndData) {
+      if (msg instanceof EndData) {
         pause();
       }
     }
@@ -146,4 +154,16 @@ public class SourceThread extends ComputeThread
     injectQueue.offer(toInject);
   }
 
+
+  @Override
+  public void reloadFromCheckpoint(Checkpoint chkp)
+  {
+    DataSourceCheckpoint checkpoint = (DataSourceCheckpoint) chkp;
+    
+    dataSource = (DataSource) checkpoint.getComputeNode();
+    injectQueue = checkpoint.getInjectQueue();
+    
+    dataSource.restart();
+  }
+ 
 }

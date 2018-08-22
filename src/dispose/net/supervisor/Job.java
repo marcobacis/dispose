@@ -21,9 +21,9 @@ import dispose.net.message.DeployDataSourceThreadMsg;
 import dispose.net.message.DeployOperatorThreadMsg;
 import dispose.net.message.ThreadCommandMsg;
 import dispose.net.message.chkp.ChkpRequestMsg;
-import dispose.net.message.chkp.DeployOperatorFromChkpMsg;
+import dispose.net.message.chkp.DeployComputeNodeFromChkpMsg;
 import dispose.net.node.ComputeNode;
-import dispose.net.node.OperatorCheckpoint;
+import dispose.net.node.checkpoint.Checkpoint;
 import dispose.net.node.datasinks.DataSink;
 import dispose.net.node.datasources.DataSource;
 import dispose.net.node.operators.Operator;
@@ -314,13 +314,13 @@ public class Job implements LogInfo
   }
   
   
-  public boolean reclaimCheckpointPart(UUID ckpid, OperatorCheckpoint part)
+  public boolean reclaimCheckpointPart(UUID ckpid, Checkpoint part)
   {
     if (!checkpoints.containsCheckpoint(ckpid))
       return false; 
     
     checkpoints.addCheckpointPart(ckpid, part);
-    DisposeLog.info(this, "reclaimed ckp ", ckpid, " part opid=", part.getOperator().getID());
+    DisposeLog.info(this, "reclaimed ckp ", ckpid, " part opid=", part.getComputeNode().getID());
     return true;
   }
   
@@ -330,12 +330,12 @@ public class Job implements LogInfo
     for (ComputeNode logNode: logNodes) {
       NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
       
-      OperatorCheckpoint ckp = checkpoints.getCheckpointPart(ckpid, logNode.getID());
+      Checkpoint ckp = checkpoints.getCheckpointPart(ckpid, logNode.getID());
       if (ckp == null)
         /* sink */
         continue;
       
-      CtrlMessage msg = new DeployOperatorFromChkpMsg(ckpid, ckp);
+      CtrlMessage msg = new DeployComputeNodeFromChkpMsg(ckpid, ckp);
       physNode.getLink().sendMsgAndRequestAck(msg);
       // TODO: wait acks after sending all the messages
       try {

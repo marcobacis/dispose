@@ -17,6 +17,7 @@ import dispose.net.message.chkp.ChkpCompletedMessage;
 import dispose.net.message.chkp.ChkpRequestMsg;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
+import dispose.net.node.checkpoint.Checkpoint;
 import dispose.net.node.datasinks.DataSink;
 
 public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
@@ -24,13 +25,11 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   private DataSink dataSink;
   private List<MonitoredLink> inStreams = new ArrayList<>();
   private AtomicBoolean running = new AtomicBoolean(true);
-  private UUID jid;
   
   public SinkThread(Node owner, UUID jid, DataSink dataSink)
   {
-    super(owner);
+    super(owner, jid);
     this.dataSink = dataSink;
-    this.jid = jid;
     this.opID = dataSink.getID();
   }
   
@@ -111,6 +110,13 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   public void linkIsBroken(Exception e)
   {
     DisposeLog.error(this, "link is down");
+  }
+
+
+  @Override
+  public void reloadFromCheckpoint(Checkpoint chkp)
+  {
+    // Do nothing, we don't need to do anything to restore the Sink
   }
 
 }

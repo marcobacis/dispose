@@ -11,6 +11,7 @@ import dispose.net.common.types.FloatData;
 
 public class MaxWindowOperator extends WindowOperator
 {
+  private static final long serialVersionUID = -3758900024278475457L;
 
   public MaxWindowOperator(int id, int size, int slide)
   {

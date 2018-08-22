@@ -13,7 +13,9 @@ public abstract class WindowOperator implements Operator, Serializable
 
   private static final long serialVersionUID = -7926914522640629497L;
   private int clock;
+  @SuppressWarnings("unused")
   private int size;
+  @SuppressWarnings("unused")
   private int slide;
   private int id; 
 

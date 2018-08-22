@@ -56,14 +56,27 @@ abstract public class AbstractDataSource implements DataSource
 
 
   @Override
-  abstract public void setUp();
+  public void setUp()
+  {
+    // Nothing to do
+  }
 
 
   @Override
-  abstract public void end();
+  public void end()
+  {
+    // Nothing to do
+  }
 
 
+  @Override
+  public void restart()
+  {
+    end();
+    setUp();
+  }
+  
   @Override
   abstract public Class<? extends DataAtom> outputRestriction();
-
+  
 }

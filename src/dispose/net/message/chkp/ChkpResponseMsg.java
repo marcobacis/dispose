@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import dispose.net.message.CtrlMessage;
 import dispose.net.message.MessageFailureException;
-import dispose.net.node.OperatorCheckpoint;
+import dispose.net.node.checkpoint.Checkpoint;
 import dispose.net.supervisor.NodeProxy;
 import dispose.net.supervisor.Supervisor;
 
@@ -12,10 +12,10 @@ public class ChkpResponseMsg extends CtrlMessage
 {
   private static final long serialVersionUID = -1987640770334245047L;
   private UUID chkpId;
-  private OperatorCheckpoint checkpoint;
+  private Checkpoint checkpoint;
   
   
-  public ChkpResponseMsg(OperatorCheckpoint checkpoint)
+  public ChkpResponseMsg(Checkpoint checkpoint)
   {
     this.chkpId = checkpoint.getID();
     this.checkpoint = checkpoint;

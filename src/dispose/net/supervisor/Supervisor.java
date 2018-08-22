@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 import dispose.log.DisposeLog;
 import dispose.net.common.Config;
-import dispose.net.node.OperatorCheckpoint;
+import dispose.net.node.checkpoint.Checkpoint;
 
 public class Supervisor implements Runnable
 {
@@ -118,7 +118,7 @@ public class Supervisor implements Runnable
   }
   
   
-  synchronized public void receiveCheckpointPart(UUID ckpId, OperatorCheckpoint ckpPart)
+  synchronized public void receiveCheckpointPart(UUID ckpId, Checkpoint ckpPart)
   {
     for (Job job: currentJobs.values()) {
       ExecutorService q = jobSerialQueues.get(job.getID());
