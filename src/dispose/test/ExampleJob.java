@@ -10,7 +10,7 @@ public class ExampleJob
 {
   public static void main(String[] args) throws Exception
   {
-    Context context = new Context("192.168.1.107");
+    Context context = new Context("127.0.0.1");
     
     /* Simple stream example. The final output is a series 
      * of numbers starting from 5.0 and so on.

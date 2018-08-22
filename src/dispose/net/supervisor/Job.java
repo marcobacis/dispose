@@ -211,6 +211,8 @@ public class Job implements LogInfo
       Collection<Integer> lnodes = allocation.logicalNodesHostedInPhysicalNode(pnode);
       Set<Integer> restLNodes = new HashSet<>(lnodes);
       restLNodes.retainAll(allowedLNodes);
+      if (restLNodes.isEmpty())
+        continue;
       
       CtrlMessage cmsg = new ThreadCommandMsg(lnodes, cmd);
       try {
@@ -247,9 +249,13 @@ public class Job implements LogInfo
       ThreadCommandMsg srcsuspend = new ThreadCommandMsg(srcid, ThreadCommandMsg.Command.SUSPEND);
       source.getLink().sendMsgAndRequestAck(srcsuspend);
       source.getLink().waitAck(srcsuspend);
-      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false);
     } catch (LinkBrokenException | NotAcknowledgeableException e) { 
       DisposeLog.error(this, "cannot suspend source; exc = ", e);
+    }
+    try {
+      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false);
+    } catch (LinkBrokenException e) {
+      DisposeLog.error(this, "cannot suspend live nodes; exc = ", e);
     }
     attemptRecovery();
   }
