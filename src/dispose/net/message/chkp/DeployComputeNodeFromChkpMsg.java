@@ -3,11 +3,11 @@ package dispose.net.message.chkp;
 
 import java.util.UUID;
 
+import dispose.log.DisposeLog;
 import dispose.net.message.CtrlMessage;
 import dispose.net.node.ComputeThread;
 import dispose.net.node.Node;
 import dispose.net.node.checkpoint.Checkpoint;
-import dispose.net.node.threads.OperatorThread;
 
 
 /** Reload the state of an OperatorThread to the one set into the given
@@ -32,14 +32,17 @@ public class DeployComputeNodeFromChkpMsg extends CtrlMessage
   public void executeOnNode(Node node)
   {
     int opID = checkpoint.getComputeNode().getID();
-    ComputeThread compThread = ((OperatorThread) node.getComputeThread(opID));
+    DisposeLog.debug(this, "DeployComputeNode ", opID, " ", jid);
+    ComputeThread compThread = node.getComputeThread(opID);
 
     if (compThread == null) {
       compThread = ComputeThread.createComputeThread(node, jid, checkpoint.getComputeNode());
       node.addComputeThread(opID, compThread);
+      DisposeLog.debug(this, "redeployed ", opID);
     }
 
     compThread.reloadFromCheckpoint(checkpoint);
+    DisposeLog.debug(this, "restored ", opID);
   }
 
 }

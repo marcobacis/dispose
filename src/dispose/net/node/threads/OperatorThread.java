@@ -328,6 +328,5 @@ public class OperatorThread extends ComputeThread
     operator = (Operator) checkpoint.getComputeNode();
     barrier = new DeterministicDataFunnel(operator.getNumInputs());
     barrier.restoreState(checkpoint.getInFlight());
-
   }
 }
