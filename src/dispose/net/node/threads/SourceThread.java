@@ -158,12 +158,12 @@ public class SourceThread extends ComputeThread
   @Override
   public void reloadFromCheckpoint(Checkpoint chkp)
   {
+    DisposeLog.info(this, "reloading source");
     DataSourceCheckpoint checkpoint = (DataSourceCheckpoint) chkp;
     
     dataSource = (DataSource) checkpoint.getComputeNode();
     injectQueue = checkpoint.getInjectQueue();
-    
-    dataSource.restart();
+    DisposeLog.info(this, "restored source");
   }
  
 }
