@@ -29,7 +29,7 @@ public class OperatorThread extends ComputeThread
   private Operator operator;
 
   private HashMap<Integer, MonitoredLink> inStreams = new HashMap<>();
-  private OperatorBroadcast outLink = new OperatorBroadcast();
+  private DataMulticaster outLink = new DataMulticaster();
 
   HashMap<Integer, Integer> opIDtoLinkIdx = new HashMap<>();
   private int lastInputIdx = 0;
@@ -84,7 +84,7 @@ public class OperatorThread extends ComputeThread
    * @throws IOException */
   public synchronized void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
-    outLink.setOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
+    outLink.addOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
   }
 
 

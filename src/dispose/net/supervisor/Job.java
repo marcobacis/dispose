@@ -296,6 +296,8 @@ public class Job implements LogInfo
     } catch (LinkBrokenException e) {
       DisposeLog.critical(this, "could not restart job after restore; exc = ", e);
     }
+    
+    DisposeLog.critical(this, "recovery completed");
   }
   
   

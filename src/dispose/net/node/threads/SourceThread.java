@@ -20,13 +20,14 @@ import dispose.net.node.datasources.DataSource;
 public class SourceThread extends ComputeThread
 {
   private DataSource dataSource;
-  OperatorBroadcast outLink = new OperatorBroadcast();
+  DataMulticaster outLink = new DataMulticaster();
 
   private AtomicBoolean running = new AtomicBoolean(false);
   private AtomicBoolean paused = new AtomicBoolean(false);
   private LinkedBlockingQueue<Message> injectQueue = new LinkedBlockingQueue<>();
   private UUID jid;
 
+  
   public SourceThread(Node owner, UUID jid, DataSource dataSource)
   {
     super(owner);
@@ -46,7 +47,7 @@ public class SourceThread extends ComputeThread
   @Override
   public void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
-    outLink.setOutputLink(outputLink, toId, new SourceDelegate());
+    outLink.addOutputLink(outputLink, toId, new SourceDelegate());
   }
 
 
@@ -62,9 +63,8 @@ public class SourceThread extends ComputeThread
     @Override
     public void linkIsBroken(Exception e)
     {
-      stop();
+      pause();
     }
-
   }
 
 
@@ -74,6 +74,7 @@ public class SourceThread extends ComputeThread
     paused.set(true);
   }
 
+  
   public void resume()
   {
     paused.set(false);
@@ -82,6 +83,7 @@ public class SourceThread extends ComputeThread
     }
   }
 
+  
   @Override
   public void start()
   {
@@ -91,49 +93,50 @@ public class SourceThread extends ComputeThread
     thd.start();
   }
 
+  
   @Override
   public void stop()
   {
     running.set(false);
-
     outLink.close();
-
     dataSource.end();
   }
 
+  
   private void mainLoop()
   {
-    try {
-      dataSource.setUp();
+    dataSource.setUp();
 
-      while (true) {
-        if (running.get() == false)
-          return;
+    while (true) {
+      if (running.get() == false)
+        return;
 
-        if (paused.get()) {
-          synchronized (paused) {
-            while (paused.get()) {
-              try {
-                paused.wait();
-              } catch (InterruptedException e) {
-                return;
-              }
+      if (paused.get()) {
+        synchronized (paused) {
+          while (paused.get()) {
+            try {
+              paused.wait();
+            } catch (InterruptedException e) {
+              return;
             }
           }
         }
-
-        Message d = injectQueue.poll();
-        if (d == null)
-          d = dataSource.nextAtom();
-        
-        outLink.sendMsg(d);
-        
-        if (d instanceof EndData) {
-          pause();
-        } 
       }
-    } catch (LinkBrokenException e) {
-      DisposeLog.error(this, "oh oh we've lost the link \\OwO/; exc = ", e);
+
+      Message d = injectQueue.poll();
+      if (d == null)
+        d = dataSource.nextAtom();
+      
+      try {
+        outLink.sendMsg(d);
+      } catch (LinkBrokenException e) {
+        DisposeLog.error(this, "we've lost a link; exc = ", e, "; pausing");
+        pause();
+      }
+      
+      if (d instanceof EndData) {
+        pause();
+      }
     }
   }
 

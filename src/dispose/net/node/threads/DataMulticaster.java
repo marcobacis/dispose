@@ -11,9 +11,8 @@ import dispose.net.links.MonitoredLink.Delegate;
 import dispose.net.message.Message;
 
 
-public class OperatorBroadcast
+public class DataMulticaster
 {
-
   private HashMap<Integer, MonitoredLink> outStreams = new HashMap<>();
 
 
@@ -21,7 +20,7 @@ public class OperatorBroadcast
    * @param outputLink The output link to use
    * @param toId The ID of the downstream operator connected through the link
    * @throws IOException */
-  public synchronized void setOutputLink(Link outputLink, int toId,
+  public synchronized void addOutputLink(Link outputLink, int toId,
     Delegate delegate) throws ClosedEndException
   {
     if (outStreams.containsKey(toId)) {
