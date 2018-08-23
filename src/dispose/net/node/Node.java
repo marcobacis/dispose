@@ -70,6 +70,10 @@ public class Node implements Runnable, MonitoredLink.Delegate
     operators.put(opid, opthd);
   }
   
+  synchronized public void removeComputeThread(int opid)
+  {
+    operators.remove(opid);
+  }
   
   public MonitoredLink getControlLink()
   {

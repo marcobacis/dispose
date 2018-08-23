@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import dispose.net.common.DataAtom;
+import dispose.net.common.DeepCopy;
 import dispose.net.node.operators.Operator;
 import dispose.net.node.threads.DeterministicDataFunnel;
 
@@ -17,12 +18,13 @@ public class OperatorCheckpoint extends Checkpoint
 
   private List<ConcurrentLinkedQueue<DataAtom>> inFlight;
   private boolean[] checked;
-
+  private DeterministicDataFunnel inputState;
 
   public OperatorCheckpoint(UUID id, Operator operator,
     DeterministicDataFunnel inputState)
   {
     super(id, operator);
+    this.inputState = (DeterministicDataFunnel) DeepCopy.copy(inputState);
     this.inFlight = new ArrayList<>(operator.getNumInputs());
     this.checked = new boolean[operator.getNumInputs()];
     for (int i = 0; i < operator.getNumInputs(); i++) {
@@ -57,6 +59,12 @@ public class OperatorCheckpoint extends Checkpoint
   public synchronized List<ConcurrentLinkedQueue<DataAtom>> getInFlight()
   {
     return inFlight;
+  }
+  
+  
+  public DeterministicDataFunnel getInputState()
+  {
+    return inputState;
   }
 
 }

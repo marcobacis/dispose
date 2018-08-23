@@ -21,6 +21,12 @@ public class ExampleJob
     Stream joined = left.join(5, right);
     Stream consumer = new StdOutConsumerStream(joined);
     
-    context.run(consumer);
+    /* A series of 10 MAX,3 windows. The final output is 
+     * the sequence of integers starting from 18 */
+    Stream stream = new SequenceProducerStream(50);
+    for(int i = 0; i < 10; i++)
+      stream = stream.apply(Op.MAX, 3);
+    
+    context.run(stream);
   }
 }

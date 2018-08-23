@@ -25,6 +25,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
   private DataSink dataSink;
   private List<MonitoredLink> inStreams = new ArrayList<>();
   private AtomicBoolean running = new AtomicBoolean(true);
+  private DataAtom lastAtom;
   
   public SinkThread(Node owner, UUID jid, DataSink dataSink)
   {
@@ -97,10 +98,11 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate
       
     } else if(msg instanceof DataAtom) {
       DataAtom da = (DataAtom)msg;
+      lastAtom = da;
       dataSink.processAtom(da);
     } else if(msg instanceof ChkpRequestMsg) {
       ChkpRequestMsg chkp = (ChkpRequestMsg) msg;
-      DisposeLog.debug(SinkThread.class, "Completed checkpoint ", chkp.getCheckpointID());
+      DisposeLog.debug(SinkThread.class, "Completed checkpoint ", chkp.getCheckpointID(), " last value ", lastAtom);
       owner.sendMsgToSupervisor(opID, new ChkpCompletedMessage(chkp.getCheckpointID()));
     }
   }

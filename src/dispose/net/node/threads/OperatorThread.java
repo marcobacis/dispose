@@ -44,6 +44,7 @@ public class OperatorThread extends ComputeThread
 
   private Thread processThread;
 
+  private DataAtom lastOutput;
 
   public OperatorThread(Node owner, UUID jid, Operator operator)
   {
@@ -216,7 +217,10 @@ public class OperatorThread extends ComputeThread
     } catch (InterruptedException e) {
       /* Who cares */ }
 
+    owner.removeComputeThread(opID);
+    
     DisposeLog.debug(this, "Operator ", opID, " stopped");
+    
   }
 
 
@@ -269,6 +273,8 @@ public class OperatorThread extends ComputeThread
 
     current.notifyCheck(idx);
 
+    DisposeLog.debug(this, "Op ", opID, " received chkpreq, last atom ", lastOutput);
+    
     if (current.isComplete()) {
       DisposeLog.debug(OperatorThread.class,
         "Checkpoint " + current.getID() + " completed on operator "
@@ -304,6 +310,7 @@ public class OperatorThread extends ComputeThread
           // sends non-null results to all the children streams
           for (DataAtom resAtom : result) {
             if (resAtom != null && !(resAtom instanceof NullData)) {
+              lastOutput = resAtom;
               outLink.sendMsg(resAtom);
             }
           }
@@ -326,7 +333,7 @@ public class OperatorThread extends ComputeThread
     checkpoints.clear();
 
     operator = (Operator) checkpoint.getComputeNode();
-    barrier = new DeterministicDataFunnel(operator.getNumInputs());
+    barrier = checkpoint.getInputState();
     barrier.restoreState(checkpoint.getInFlight());
   }
 }
