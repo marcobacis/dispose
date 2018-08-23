@@ -80,7 +80,7 @@ public class OperatorThread extends ComputeThread implements LogInfo
     idx = opIDtoLinkIdx.get(fromId);
 
     inStreams.put(fromId, MonitoredLink.asyncMonitorLink(inputLink,
-      new OperatorInputDelegate(this, idx), 0));
+      new OperatorInputDelegate(idx), 0));
   }
 
 
@@ -91,7 +91,7 @@ public class OperatorThread extends ComputeThread implements LogInfo
   public synchronized void addOutputLink(Link outputLink, int toId)
     throws ClosedEndException
   {
-    outLink.addOutputLink(outputLink, toId, new OperatorOutputDelegate(this));
+    outLink.addOutputLink(outputLink, toId, new OperatorOutputDelegate());
   }
 
 
@@ -99,13 +99,11 @@ public class OperatorThread extends ComputeThread implements LogInfo
    * from upstream operators and filling the input queues. */
   private class OperatorInputDelegate implements Delegate, LogInfo
   {
-    OperatorThread op;
-    int StreamIndex;
+    private int StreamIndex;
 
 
-    OperatorInputDelegate(OperatorThread op, int idx)
+    private OperatorInputDelegate(int idx)
     {
-      this.op = op;
       this.StreamIndex = idx;
     }
 
@@ -114,9 +112,9 @@ public class OperatorThread extends ComputeThread implements LogInfo
     public void messageReceived(Message msg)
     {
       if (msg instanceof DataAtom) {
-        this.op.notifyElement(StreamIndex, ((DataAtom) msg));
+        OperatorThread.this.notifyElement(StreamIndex, ((DataAtom) msg));
       } else if (msg instanceof ChkpRequestMsg) {
-        this.op.notifyChkpMessage(StreamIndex, (ChkpRequestMsg) msg);
+        OperatorThread.this.notifyChkpMessage(StreamIndex, (ChkpRequestMsg) msg);
       }
     }
 
@@ -124,9 +122,9 @@ public class OperatorThread extends ComputeThread implements LogInfo
     @Override
     public void linkIsBroken(Exception e)
     {
-      this.op.pause();
+      OperatorThread.this.pause();
       DisposeLog.error(this, "The ", this.StreamIndex, "th link on operator ",
-        op.getID(), " is broken");
+        OperatorThread.this.getID(), " is broken");
     }
 
 
@@ -142,15 +140,6 @@ public class OperatorThread extends ComputeThread implements LogInfo
    * operators and noticing links down. */
   private class OperatorOutputDelegate implements Delegate, LogInfo
   {
-    private OperatorThread op;
-
-
-    public OperatorOutputDelegate(OperatorThread op)
-    {
-      this.op = op;
-    }
-
-
     @Override
     public void messageReceived(Message msg)
     {
@@ -161,7 +150,7 @@ public class OperatorThread extends ComputeThread implements LogInfo
     @Override
     public void linkIsBroken(Exception e)
     {
-      this.op.pause();
+      OperatorThread.this.pause();
     }
 
 
