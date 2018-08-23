@@ -142,7 +142,7 @@ public class MonitoredLink
   }
   
   
-  public void sendMsg(Message message) throws LinkBrokenException
+  public synchronized void sendMsg(Message message) throws LinkBrokenException
   {
     link.sendMsg(message);
   }
