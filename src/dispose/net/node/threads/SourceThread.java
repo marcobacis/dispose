@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
+import dispose.log.LogInfo;
 import dispose.net.common.types.EndData;
 import dispose.net.links.Link;
 import dispose.net.links.LinkBrokenException;
@@ -21,7 +22,7 @@ import dispose.net.node.checkpoint.DataSourceCheckpoint;
 import dispose.net.node.datasources.DataSource;
 
 
-public class SourceThread extends ComputeThread
+public class SourceThread extends ComputeThread implements Delegate, LogInfo
 {
   private DataSource dataSource;
   DataMulticaster outLink = new DataMulticaster();
@@ -49,24 +50,20 @@ public class SourceThread extends ComputeThread
   @Override
   public void addOutputLink(Link outputLink, int toId) throws ClosedEndException
   {
-    outLink.addOutputLink(outputLink, toId, new SourceDelegate());
+    outLink.addOutputLink(outputLink, toId, this);
   }
 
 
-  private class SourceDelegate implements Delegate
+  @Override
+  public void messageReceived(Message msg) throws MessageFailureException
   {
-
-    @Override
-    public void messageReceived(Message msg) throws MessageFailureException
-    {
-    }
+  }
 
 
-    @Override
-    public void linkIsBroken(Exception e)
-    {
-      pause();
-    }
+  @Override
+  public void linkIsBroken(Exception e)
+  {
+    pause();
   }
 
 
@@ -164,6 +161,13 @@ public class SourceThread extends ComputeThread
     dataSource = (DataSource) checkpoint.getComputeNode();
     injectQueue = checkpoint.getInjectQueue();
     DisposeLog.info(this, "restored source");
+  }
+
+
+  @Override
+  public String loggingName()
+  {
+    return "Source " + dataSource.getClass().getSimpleName() + " " + Integer.toString(dataSource.getID());
   }
  
 }

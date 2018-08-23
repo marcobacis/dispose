@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import dispose.log.DisposeLog;
+import dispose.log.LogInfo;
 import dispose.net.message.Message;
 import dispose.net.message.MessageFailureException;
 
@@ -61,9 +62,17 @@ public class MonitoredLink
   {
     MonitoredLink mlink = new MonitoredLink(link, delegate);
     mlink.setTimeoutPeriod(timeout);
+    
     Thread thd = new Thread(() -> mlink.monitorSynchronously());
-    thd.setName("link-monitor-" + Integer.toHexString(mlink.hashCode()));
+    String thdlabel;
+    if (delegate instanceof LogInfo) {
+      thdlabel = ((LogInfo)delegate).loggingName().toLowerCase().replaceAll("\\s", "-");
+    } else {
+      thdlabel = Integer.toHexString(mlink.hashCode());
+    }
+    thd.setName("link-monitor-" + thdlabel);
     thd.start();
+    
     return mlink;
   }
   
@@ -86,7 +95,7 @@ public class MonitoredLink
           Message realm = ackreq.getMessage();
           
           if (ackreq.getType() == AckType.RECEPTION) {
-            sendMsg(new AckMsg(realm.getUUID()));
+            link.sendMsg(new AckMsg(realm.getUUID()));
             msgExecutor.submit(() -> execMessage(realm, false));
             
           } else if (ackreq.getType() == AckType.PROCESSING) {

@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
+import dispose.log.LogInfo;
 import dispose.net.common.DataAtom;
 import dispose.net.common.types.EndData;
 import dispose.net.common.types.NullData;
@@ -27,7 +28,7 @@ import dispose.net.node.operators.Operator;
 
 /** Class representing a single operator thread. A thread is instantiated for
  * each operator on the node, and the threads are linked by using Links. */
-public class OperatorThread extends ComputeThread
+public class OperatorThread extends ComputeThread implements LogInfo
 {
   private Operator operator;
 
@@ -96,7 +97,7 @@ public class OperatorThread extends ComputeThread
 
   /** Input links delegate, responsible for asynchronously receiving DataAtoms
    * from upstream operators and filling the input queues. */
-  private class OperatorInputDelegate implements Delegate
+  private class OperatorInputDelegate implements Delegate, LogInfo
   {
     OperatorThread op;
     int StreamIndex;
@@ -127,12 +128,19 @@ public class OperatorThread extends ComputeThread
       DisposeLog.error(this, "The ", this.StreamIndex, "th link on operator ",
         op.getID(), " is broken");
     }
+
+
+    @Override
+    public String loggingName()
+    {
+      return "Input " + OperatorThread.this.loggingName();
+    }
   }
 
 
   /** Output links delegate, responsible for receiving data acks from downstream
    * operators and noticing links down. */
-  private class OperatorOutputDelegate implements Delegate
+  private class OperatorOutputDelegate implements Delegate, LogInfo
   {
     private OperatorThread op;
 
@@ -154,6 +162,13 @@ public class OperatorThread extends ComputeThread
     public void linkIsBroken(Exception e)
     {
       this.op.pause();
+    }
+
+
+    @Override
+    public String loggingName()
+    {
+      return "Output " + OperatorThread.this.loggingName();
     }
 
   }
@@ -231,6 +246,7 @@ public class OperatorThread extends ComputeThread
   private void notifyElement(int idx, DataAtom element)
   {
     if (element != null) {
+      DisposeLog.debug(this, "**** recv f=", idx, " e=", element);
       barrier.receivedAtom(idx, element);
 
       // adds value to all current checkpoints
@@ -335,5 +351,12 @@ public class OperatorThread extends ComputeThread
     operator = (Operator) checkpoint.getComputeNode();
     barrier = checkpoint.getInputState();
     barrier.restoreState(checkpoint.getInFlight());
+  }
+
+
+  @Override
+  public String loggingName()
+  {
+    return "Operator " + operator.getClass().getSimpleName() + " " + Integer.toString(operator.getID());
   }
 }
