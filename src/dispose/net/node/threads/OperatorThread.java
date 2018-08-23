@@ -246,7 +246,6 @@ public class OperatorThread extends ComputeThread implements LogInfo
   private void notifyElement(int idx, DataAtom element)
   {
     if (element != null) {
-      DisposeLog.debug(this, "**** recv f=", idx, " e=", element);
       barrier.receivedAtom(idx, element);
 
       // adds value to all current checkpoints
