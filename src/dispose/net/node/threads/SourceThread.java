@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dispose.log.DisposeLog;
 import dispose.log.LogInfo;
+import dispose.net.common.DataAtom;
 import dispose.net.common.types.EndData;
 import dispose.net.links.Link;
 import dispose.net.links.LinkBrokenException;
@@ -28,9 +29,9 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
   DataMulticaster outLink = new DataMulticaster();
 
   private AtomicBoolean running = new AtomicBoolean(false);
-  private AtomicBoolean paused = new AtomicBoolean(false);
   private LinkedBlockingQueue<Message> injectQueue = new LinkedBlockingQueue<>();
-
+  
+  private Thread dataThread;
   
   public SourceThread(Node owner, UUID jid, DataSource dataSource)
   {
@@ -70,26 +71,33 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
   @Override
   public void pause()
   {
-    paused.set(true);
+    dataSource.end();
+    
+    running.set(false);
+    
+    try {
+      dataThread.join();
+    } catch (InterruptedException e) { }
+    
+    DisposeLog.debug(this, "Source paused");
   }
 
   
   public void resume()
   {
-    paused.set(false);
-    synchronized (paused) {
-      paused.notify();
-    }
+    DisposeLog.debug(this, "Source restarted");
+    start();
   }
 
   
   @Override
-  public void start()
+  public synchronized void start()
   {
+    dataSource.setUp();
     running.set(true);
-    Thread thd = new Thread(() -> mainLoop());
-    thd.setName("data-source-" + Integer.toString(getID()));
-    thd.start();
+    dataThread = new Thread(() -> mainLoop());
+    dataThread.setName("data-source-" + Integer.toString(getID()));
+    dataThread.start();
   }
 
   
@@ -99,28 +107,19 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
     running.set(false);
     outLink.close();
     dataSource.end();
+    
+    try{
+      dataThread.join();
+    } catch (InterruptedException e) { }
   }
 
   
   private void mainLoop()
   {
-    dataSource.setUp();
-
+    
     while (true) {
       if (running.get() == false)
         return;
-
-      if (paused.get()) {
-        synchronized (paused) {
-          while (paused.get()) {
-            try {
-              paused.wait();
-            } catch (InterruptedException e) {
-              return;
-            }
-          }
-        }
-      }
 
       Message msg = injectQueue.poll();
       if (msg == null)
@@ -153,13 +152,14 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
 
 
   @Override
-  public void reloadFromCheckpoint(Checkpoint chkp)
+  public synchronized void reloadFromCheckpoint(Checkpoint chkp)
   {
     DisposeLog.info(this, "reloading source");
     DataSourceCheckpoint checkpoint = (DataSourceCheckpoint) chkp;
     
     dataSource = (DataSource) checkpoint.getComputeNode();
     injectQueue = checkpoint.getInjectQueue();
+        
     DisposeLog.info(this, "restored source");
   }
 
