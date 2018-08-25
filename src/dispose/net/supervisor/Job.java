@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import dispose.client.ClientDag;
 import dispose.log.DisposeLog;
@@ -203,12 +204,15 @@ public class Job implements LogInfo
 
   private void sendCommandToAllLogicalNodes(ThreadCommandMsg.Command cmd, boolean ignoreDead) throws LinkBrokenException
   {
-    sendCommandToLogicalNodes(allocation.getLiveLogicalNodes(), cmd, ignoreDead);
+    sendCommandToLogicalNodes(allocation.getLiveLogicalNodes(), cmd, ignoreDead, false);
   }
 
 
   private void sendCommandToLogicalNodes(
-    Collection<Integer> allowedLNodes, ThreadCommandMsg.Command cmd, boolean ignoreDead) throws LinkBrokenException
+    Collection<Integer> allowedLNodes, 
+    ThreadCommandMsg.Command cmd, 
+    boolean ignoreDead,
+    boolean waitAcknowledgment) throws LinkBrokenException
   {
     Set<NodeProxy> pnodes = new HashSet<>(allocation.livePhysicalNodes());
     for (NodeProxy pnode : pnodes) {
@@ -220,10 +224,17 @@ public class Job implements LogInfo
 
       CtrlMessage cmsg = new ThreadCommandMsg(lnodes, cmd);
       try {
-        pnode.getLink().sendMsg(cmsg);
+        if (waitAcknowledgment) {
+          pnode.getLink().sendMsgAndRequestAck(cmsg);
+          pnode.getLink().waitAck(cmsg);
+        } else {
+          pnode.getLink().sendMsg(cmsg);
+        }
       } catch (LinkBrokenException e) {
         if (!ignoreDead)
           throw e;
+      } catch (NotAcknowledgeableException e) {
+        throw new RuntimeException("wat");
       }
     }
   }
@@ -232,7 +243,7 @@ public class Job implements LogInfo
   public void nodeHasDied(NodeProxy np)
   {
     allocation.removeDeadPhysicalNodes(Collections.singleton(np));
-    DisposeLog.critical(this, "RIP node ", np.nodeID());
+    DisposeLog.critical(this, "RIP node ", Integer.toHexString(np.nodeID()));
 
     if (np == owner) {
       DisposeLog.critical(this, "the owner has died; garbage-collecting the rest of the job");
@@ -245,22 +256,27 @@ public class Job implements LogInfo
     status = Status.RECOVERY;
 
     int srcid = jobDag.getSourceNodeId();
-    Set<Integer> otherNodes = new HashSet<>(allocation.getLiveLogicalNodes());
-    otherNodes.remove(srcid);
+    Set<Integer> otherNodes = allocation.getLiveLogicalNodes(false, true);
 
-    NodeProxy source = allocation.getPhysicalNodeHostingLogicalNodeId(srcid);
+    DisposeLog.critical(this, "suspending live nodes");
     try {
-      ThreadCommandMsg srcsuspend = new ThreadCommandMsg(srcid, ThreadCommandMsg.Command.SUSPEND);
-      source.getLink().sendMsgAndRequestAck(srcsuspend);
-      source.getLink().waitAck(srcsuspend);
-    } catch (LinkBrokenException | NotAcknowledgeableException e) {
+      sendCommandToLogicalNodes(Collections.singleton(srcid), ThreadCommandMsg.Command.SUSPEND, false, true);
+    } catch (LinkBrokenException e) {
       DisposeLog.error(this, "cannot suspend source; exc = ", e);
+      return;
     }
     try {
-      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false);
+      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false, false);
     } catch (LinkBrokenException e) {
       DisposeLog.error(this, "cannot suspend live nodes; exc = ", e);
+      return;
     }
+    
+    DisposeLog.critical(this, "waiting 5 seconds to let the links flush themselves");
+    try {
+      TimeUnit.SECONDS.sleep(5);
+    } catch (InterruptedException e) { }
+    
     attemptRecovery();
   }
 
@@ -274,6 +290,7 @@ public class Job implements LogInfo
       DisposeLog.error(this, "no eligible checkpoint found");
       return;
     }
+    DisposeLog.critical(this, "will use checkpoint ", ckp);
 
     Set<LinkDescription> linksAlreadyAlive = allocation.getLiveLinks();
 
@@ -288,6 +305,7 @@ public class Job implements LogInfo
       restoreStateFromCheckpoint(jobDag.getNodes(), ckp);
     } catch (LinkBrokenException e1) {
       DisposeLog.error("could not restore checkpoint", ckp, "; exc = ", e1);
+      return;
     }
 
     Set<LinkDescription> newLocalLinks = new HashSet<>(allocation.localLinks());
@@ -295,6 +313,7 @@ public class Job implements LogInfo
     Set<LinkDescription> newRemoteLinks = new HashSet<>(allocation.remoteLinks());
     newRemoteLinks.removeAll(linksAlreadyAlive);
 
+    DisposeLog.critical(this, "rebuilding data overlay network");
     try {
       materializeLocalLinks(newLocalLinks);
       materializeRemoteLinks(newRemoteLinks);
@@ -303,8 +322,12 @@ public class Job implements LogInfo
       return;
     }
 
+    DisposeLog.critical(this, "resuming processing");
     try {
-      sendCommandToAllLogicalNodes(ThreadCommandMsg.Command.RESUME, false);
+      Set<Integer> otherNodes = allocation.getLiveLogicalNodes(false, true);
+      int sourceId = jobDag.getSourceNodeId();
+      sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.RESUME, false, true);
+      sendCommandToLogicalNodes(Collections.singleton(sourceId), ThreadCommandMsg.Command.RESUME, false, true);
       status = Status.RUN;
     } catch (LinkBrokenException e) {
       DisposeLog.critical(this, "could not restart job after restore; exc = ", e);
@@ -340,6 +363,8 @@ public class Job implements LogInfo
 
   private void restoreStateFromCheckpoint(Collection<ComputeNode> logNodes, UUID ckpid) throws LinkBrokenException
   {
+    DisposeLog.critical(this, "restoring node state");
+    
     for (ComputeNode logNode : logNodes) {
       NodeProxy physNode = allocation.getPhysicalNodeHostingLogicalNodeId(logNode.getID());
 

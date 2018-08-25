@@ -39,7 +39,18 @@ public class JobDagAllocation
   
   public Set<Integer> getLiveLogicalNodes()
   {
-    return Collections.unmodifiableSet(new HashSet<>(liveLogNodes));
+    return getLiveLogicalNodes(true, true);
+  }
+  
+  
+  public Set<Integer> getLiveLogicalNodes(boolean withSource, boolean withSink)
+  {
+    Set<Integer> all = new HashSet<>(liveLogNodes);
+    if (!withSource)
+      all.remove(jobDag.getSourceNodeId());
+    if (!withSink)
+      all.remove(jobDag.getSinkNodeId());
+    return all;
   }
   
   
