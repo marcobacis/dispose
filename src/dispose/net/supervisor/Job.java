@@ -222,7 +222,7 @@ public class Job implements LogInfo
       if (restLNodes.isEmpty())
         continue;
 
-      CtrlMessage cmsg = new ThreadCommandMsg(lnodes, cmd);
+      CtrlMessage cmsg = new ThreadCommandMsg(restLNodes, cmd);
       try {
         if (waitAcknowledgment) {
           pnode.getLink().sendMsgAndRequestAck(cmsg);

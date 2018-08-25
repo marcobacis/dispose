@@ -191,6 +191,10 @@ public class OperatorThread extends ComputeThread implements LogInfo
   @Override
   public void resume()
   {
+    if (this.running.get()) {
+      DisposeLog.warn(this, "let's not resume the same operator twice, shall we?");
+      return;
+    }
     this.running.set(true);
     recreateThread();
   }
