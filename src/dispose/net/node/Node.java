@@ -1,3 +1,4 @@
+
 package dispose.net.node;
 
 import java.util.Collection;
@@ -23,8 +24,8 @@ public class Node implements Runnable, MonitoredLink.Delegate
   private Map<Integer, ComputeThread> operators;
   private MonitoredLink ctrlLink;
   private Set<UUID> completedJobs = new HashSet<>();
-  
-  
+
+
   public Node(Link ctrlLink)
   {
     operators = new HashMap<>();
@@ -35,33 +36,34 @@ public class Node implements Runnable, MonitoredLink.Delegate
     }
   }
 
-  
+
   @Override
   public void run()
   {
     ctrlLink.monitorSynchronously();
   }
-  
-  
+
+
   @Override
   public void messageReceived(Message msg) throws MessageFailureException
   {
-    //TODO handle errors on the supervisor link (and on the creation of operator links)
-    CtrlMessage cmsg = (CtrlMessage)msg;
+    // TODO handle errors on the supervisor link (and on the creation of
+    // operator links)
+    CtrlMessage cmsg = (CtrlMessage) msg;
     cmsg.executeOnNode(this);
   }
-  
-  
-  /** Returns the operator with the specified ID or null if that operator is
-   * not materialized on this node.
+
+
+  /** Returns the operator with the specified ID or null if that operator is not
+   * materialized on this node.
    * @param opid The ID of the operator.
    * @return An operator or null. */
   synchronized public ComputeThread getComputeThread(int opid)
   {
     return operators.get(opid);
   }
-  
-  
+
+
   /** Add an instantiated operator to the local directory of operators.
    * @param opid The ID of the operator.
    * @param opthd The materialized operator. */
@@ -69,18 +71,20 @@ public class Node implements Runnable, MonitoredLink.Delegate
   {
     operators.put(opid, opthd);
   }
-  
+
+
   synchronized public void removeComputeThread(int opid)
   {
     operators.remove(opid);
   }
-  
+
+
   public MonitoredLink getControlLink()
   {
     return ctrlLink;
   }
-  
-  
+
+
   synchronized public Set<Integer> getCurrentlyInstantiatedThreads()
   {
     return Collections.unmodifiableSet(new HashSet<>(operators.keySet()));
@@ -93,8 +97,8 @@ public class Node implements Runnable, MonitoredLink.Delegate
     DisposeLog.critical(this, "control link down in node; exc = ", e != null ? e : "timeout");
     teardown();
   }
-  
-  
+
+
   public synchronized void sendMsgToSupervisor(int opID, Message msg)
   {
     try {
@@ -103,21 +107,22 @@ public class Node implements Runnable, MonitoredLink.Delegate
       linkIsBroken(e);
     }
   }
-  
-  
+
+
   public void injectIntoSource(Message toInject)
   {
-    //first, check if there is a source here (at most one)
+    // first, check if there is a source here (at most one)
     Collection<ComputeThread> threads = operators.values();
-    
-    for(ComputeThread thread : threads) {
-      if(thread instanceof SourceThread) {
+
+    for (ComputeThread thread : threads) {
+      if (thread instanceof SourceThread) {
         ((SourceThread) thread).injectMessage(toInject);
         return;
       }
     }
   }
-  
+
+
   public void notifyCompletedJob(UUID jid)
   {
     synchronized (this) {
@@ -125,10 +130,11 @@ public class Node implements Runnable, MonitoredLink.Delegate
       notifyAll();
     }
   }
-  
+
+
   public void waitJobCompleted(UUID jid) throws InterruptedException
   {
-    if(!completedJobs.contains(jid)) {
+    if (!completedJobs.contains(jid)) {
       while (!completedJobs.contains(jid)) {
         synchronized (this) {
           wait();
@@ -136,16 +142,17 @@ public class Node implements Runnable, MonitoredLink.Delegate
       }
       completedJobs.remove(jid);
     }
-      
+
   }
-  
+
+
   private void teardown()
   {
     DisposeLog.critical(this, "node teardown initiated");
     Collection<ComputeThread> operatorl = operators.values();
-    for (ComputeThread op: operatorl) {
+    for (ComputeThread op : operatorl) {
       op.stop();
     }
   }
-  
+
 }
