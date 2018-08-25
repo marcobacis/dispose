@@ -124,7 +124,6 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
         msg = injectQueue.poll();
         if (msg == null) {
           msg = dataSource.nextAtom();
-          DisposeLog.debug(this, "next = ", msg);
         }
       }
       
