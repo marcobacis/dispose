@@ -309,7 +309,10 @@ public class OperatorThread extends ComputeThread implements LogInfo
 
         } else if (barrier.processCondition()) {
           // process the inputs
-          List<DataAtom> result = this.operator.processAtom(inputAtoms);
+          List<DataAtom> result;
+          synchronized (this) {
+            result = this.operator.processAtom(inputAtoms);
+          }
 
           // sends non-null results to all the children streams
           for (DataAtom resAtom : result) {
