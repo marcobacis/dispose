@@ -9,6 +9,7 @@ import dispose.net.common.DataAtom;
 import dispose.net.common.types.EndData;
 import dispose.net.common.types.FloatData;
 import dispose.net.common.types.NullData;
+import dispose.net.node.checkpoint.OperatorCheckpoint;
 
 
 /** A class which deterministically funnels N DataAtoms at once from N producers 
@@ -46,14 +47,12 @@ public class DeterministicDataFunnel implements Serializable
   }
   
   
-  public void restoreState(List<ConcurrentLinkedQueue<DataAtom>> qstate)
+  public void addInFlightFromCheckpoint(OperatorCheckpoint checkpoint)
   {
-    inputQueues = new ArrayList<>(qstate);
+    List<ConcurrentLinkedQueue<DataAtom>> inFlight = checkpoint.getInFlight();
     
-    for (int d = 0; d < numInputs; d++) {
-      inputAtoms[d] = new NullData();
-      readyAtoms[d] = false;
-      endAtoms[d] = false;
+    for(int q = 0; q < inputQueues.size(); q++) {
+      inputQueues.get(q).addAll(inFlight.get(q));
     }
   }
   
@@ -73,20 +72,17 @@ public class DeterministicDataFunnel implements Serializable
     for (int i = 0; i < inputAtoms.length; i++) {
       if (!readyAtoms[i]) {
         ConcurrentLinkedQueue<DataAtom> queue = inputQueues.get(i);
-        
-        //synchronized(queue) {
-          DataAtom inAtom = queue.peek();
-          if (inAtom != null && !(inAtom instanceof NullData)) {
-            if (inAtom instanceof FloatData) {
-              inputAtoms[i] = inAtom;
-            } else if (inAtom instanceof EndData) {
-              inputAtoms[i] = new NullData();
-              endAtoms[i] = true;
-            }
-            readyAtoms[i] = true;
-            queue.remove();
+        DataAtom inAtom = queue.peek();
+        if (inAtom != null && !(inAtom instanceof NullData)) {
+          if (inAtom instanceof FloatData) {
+            inputAtoms[i] = inAtom;
+          } else if (inAtom instanceof EndData) {
+            inputAtoms[i] = new NullData();
+            endAtoms[i] = true;
           }
-        //}
+          readyAtoms[i] = true;
+          queue.remove();
+        }
       }
     }
     

@@ -345,7 +345,7 @@ public class OperatorThread extends ComputeThread implements LogInfo
 
     operator = (Operator) checkpoint.getComputeNode();
     barrier = checkpoint.getInputState();
-    barrier.restoreState(checkpoint.getInFlight());
+    barrier.addInFlightFromCheckpoint(checkpoint);
   }
 
 

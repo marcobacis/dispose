@@ -36,7 +36,8 @@ public class OperatorCheckpoint extends Checkpoint
 
   public synchronized void addInFlightAtom(int idx, DataAtom atom)
   {
-    inFlight.get(idx).offer(atom);
+    if(!checked[idx])
+      inFlight.get(idx).offer(atom);
   }
 
 
