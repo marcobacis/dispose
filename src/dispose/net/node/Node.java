@@ -1,6 +1,7 @@
 
 package dispose.net.node;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -134,6 +135,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
 
   public void waitJobCompleted(UUID jid) throws InterruptedException
   {
+    // TODO: throw on supervisor death
     if (!completedJobs.contains(jid)) {
       while (!completedJobs.contains(jid)) {
         synchronized (this) {
@@ -149,7 +151,7 @@ public class Node implements Runnable, MonitoredLink.Delegate
   private void teardown()
   {
     DisposeLog.critical(this, "node teardown initiated");
-    Collection<ComputeThread> operatorl = operators.values();
+    Collection<ComputeThread> operatorl = new ArrayList<>(operators.values());
     for (ComputeThread op : operatorl) {
       op.stop();
     }
