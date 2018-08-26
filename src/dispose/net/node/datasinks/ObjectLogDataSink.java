@@ -1,5 +1,8 @@
 package dispose.net.node.datasinks;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import dispose.log.DisposeLog;
 import dispose.net.common.DataAtom;
 
@@ -7,6 +10,7 @@ public class ObjectLogDataSink implements DataSink
 {
   private static final long serialVersionUID = 8823023649552312928L;
   private int id;
+  private Map<Integer, Long> streamClocks = new HashMap<>();
   private int clock = 0;
   
   
@@ -14,6 +18,7 @@ public class ObjectLogDataSink implements DataSink
   {
     this.id = id;
   }
+  
   
   @Override
   public int getID()
@@ -32,7 +37,13 @@ public class ObjectLogDataSink implements DataSink
   @Override
   public void processAtom(DataAtom atom, int sourceId)
   {
-    DisposeLog.debug(this, "[objid=", id, "] ", atom.toString());
+    Long lastTs = streamClocks.get(sourceId);
+    if (lastTs == null)
+      lastTs = (long) -1;
+    if (lastTs < atom.getTimestamp()) {
+      streamClocks.put(sourceId, atom.getTimestamp());
+      DisposeLog.debug(this, "[objid=", id, "] ", atom.toString());
+    }
     clock++;
   }
 
