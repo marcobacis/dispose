@@ -161,6 +161,7 @@ public class SourceThread extends ComputeThread implements Delegate, LogInfo
     
     synchronized (this) {
       dataSource = (DataSource) checkpoint.getComputeNode();
+      dataSource.restart();
     }
     injectQueue = checkpoint.getInjectQueue();
     DisposeLog.info(this, "restored source");
