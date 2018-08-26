@@ -5,7 +5,7 @@ import dispose.net.node.ComputeNode;
 
 public interface DataSink extends ComputeNode
 {
-  public void processAtom(DataAtom atom);
+  public void processAtom(DataAtom atom, int sourceId);
   
   /**
    * Performs initialization procedures (e.g. opening files/urls etc..)

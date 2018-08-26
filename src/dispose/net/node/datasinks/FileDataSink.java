@@ -41,7 +41,7 @@ public class FileDataSink implements DataSink
 
 
   @Override
-  public void processAtom(DataAtom atom)
+  public void processAtom(DataAtom atom, int sourceId)
   {
     try {
       outStream.write(((FloatData) atom).floatValue() + "\n");

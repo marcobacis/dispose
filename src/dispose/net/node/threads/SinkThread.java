@@ -3,7 +3,6 @@ package dispose.net.node.threads;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
 
 import dispose.log.DisposeLog;
 import dispose.log.LogInfo;
@@ -14,6 +13,7 @@ import dispose.net.links.MonitoredLink;
 import dispose.net.message.JobCommandMsg;
 import dispose.net.message.JobCommandMsg.Command;
 import dispose.net.message.Message;
+import dispose.net.message.MessageFailureException;
 import dispose.net.message.chkp.ChkpCompletedMessage;
 import dispose.net.message.chkp.ChkpRequestMsg;
 import dispose.net.node.ComputeThread;
@@ -21,11 +21,10 @@ import dispose.net.node.Node;
 import dispose.net.node.checkpoint.Checkpoint;
 import dispose.net.node.datasinks.DataSink;
 
-public class SinkThread extends ComputeThread implements MonitoredLink.Delegate, LogInfo
+public class SinkThread extends ComputeThread implements LogInfo
 {
   private DataSink dataSink;
   private Map<Integer, MonitoredLink> inStreams = new HashMap<>();
-  private Semaphore processPermit = new Semaphore(0);
   private State state = State.SETUP;
   private DataAtom lastAtom;
   
@@ -52,7 +51,7 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
       oldLink.close();
     }
     
-    MonitoredLink monlink = MonitoredLink.asyncMonitorLink(inputLink, this, 0);
+    MonitoredLink monlink = MonitoredLink.asyncMonitorLink(inputLink, new Delegate(fromId), 0);
     inStreams.put(fromId, monlink);
   }
 
@@ -65,12 +64,9 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
 
 
   @Override
-  public void pause()
+  public synchronized void pause()
   {
     if (state == State.RUNNING) {
-      try {
-        processPermit.acquire();
-      } catch (InterruptedException e) { }
       DisposeLog.debug(this, "Sink thread paused");
       state = State.PAUSED;
     }
@@ -78,35 +74,32 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
   
   
   @Override
-  public void resume()
+  public synchronized void resume()
   {
     if (state == State.RUNNING)
       return;
     state = State.RUNNING;
-    processPermit.release();
   }
 
   
   @Override
-  public void start()
+  public synchronized void start()
   {
     if (state == State.RUNNING)
       return;
     dataSink.setUp();
     state = State.RUNNING;
-    processPermit.release();
   }
 
   
   @Override
-  public void stop()
+  public synchronized void stop()
   {
     if (state == State.STOPPED)
       return;
     
     /* make sure all readers are unlocked, so that we don't leave behind
      * any zombie thread */
-    processPermit.release();
     state = State.STOPPED;
     
     for (MonitoredLink ml: inStreams.values()) {
@@ -116,15 +109,38 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
     dataSink.end();
     DisposeLog.debug(this, "Sink thread stopped");
   }
+  
+  
+  private class Delegate implements MonitoredLink.Delegate
+  {
+    int fromId;
+    
+    
+    private Delegate(int fromId)
+    {
+      this.fromId = fromId;
+    }
+    
+    
+    @Override
+    public void messageReceived(Message msg) throws MessageFailureException
+    {
+      SinkThread.this.messageReceived(msg, fromId);
+    }
+
+    
+    @Override
+    public void linkIsBroken(Exception e)
+    {
+      SinkThread.this.linkIsBroken(e);
+    }
+  }
 
   
-  @Override
-  public void messageReceived(Message msg)
+  public synchronized void messageReceived(Message msg, int fromId)
   {
-    try {
-      processPermit.acquire();
-    } catch (InterruptedException e) { }
-    processPermit.release();
+    if (state != State.RUNNING)
+      return;
     
     if(msg instanceof EndData) {
       DisposeLog.debug(this, "End data received at the sink");
@@ -132,10 +148,11 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
       owner.sendMsgToSupervisor(opID, endMsg);
       pause();
       
-    } else if(msg instanceof DataAtom) {
+    } else if (msg instanceof DataAtom) {
       DataAtom da = (DataAtom)msg;
       lastAtom = da;
-      dataSink.processAtom(da);
+      dataSink.processAtom(da, fromId);
+      
     } else if(msg instanceof ChkpRequestMsg) {
       ChkpRequestMsg chkp = (ChkpRequestMsg) msg;
       DisposeLog.debug(SinkThread.class, "Completed checkpoint ", chkp.getCheckpointID(), " last value ", lastAtom);
@@ -144,7 +161,6 @@ public class SinkThread extends ComputeThread implements MonitoredLink.Delegate,
   }
 
 
-  @Override
   public void linkIsBroken(Exception e)
   {
     DisposeLog.error(this, "link is down");

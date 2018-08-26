@@ -30,7 +30,7 @@ public class ObjectLogDataSink implements DataSink
 
 
   @Override
-  public void processAtom(DataAtom atom)
+  public void processAtom(DataAtom atom, int sourceId)
   {
     DisposeLog.debug(this, "[objid=", id, "] ", atom.toString());
     clock++;
