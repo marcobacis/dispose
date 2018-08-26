@@ -10,7 +10,7 @@ import dispose.net.common.types.FloatData;
 public class RandomFloatDataSrc extends AbstractDataSource
 {
   private static final long serialVersionUID = -3962038698442920907L;
-  private transient Random rng;
+  private Random rng;
 
 
   public RandomFloatDataSrc(int id, int throttlems)
