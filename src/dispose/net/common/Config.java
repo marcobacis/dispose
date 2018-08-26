@@ -9,4 +9,6 @@ public class Config
   
   public static final int heartbeatPeriod = 5000;
   public static final int checkpointPeriod = 10000;
+  
+  public static final int recoveryRetryPeriod = 5000;
 }

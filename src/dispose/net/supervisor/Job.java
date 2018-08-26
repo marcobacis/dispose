@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import dispose.client.ClientDag;
 import dispose.log.DisposeLog;
 import dispose.log.LogInfo;
+import dispose.net.common.Config;
 import dispose.net.links.LinkBrokenException;
 import dispose.net.links.MonitoredLink.AckType;
 import dispose.net.links.NotAcknowledgeableException;
@@ -42,6 +43,7 @@ public class Job implements LogInfo
   private JobDagAllocation allocation;
   private CheckpointArchive checkpoints;
   private Status status;
+  private int recoveryAttemptCounter = 0;
 
 
   private enum Status {
@@ -255,40 +257,71 @@ public class Job implements LogInfo
       return;
     status = Status.RECOVERY;
 
-    int srcid = jobDag.getSourceNodeId();
-    Set<Integer> otherNodes = allocation.getLiveLogicalNodes(false, true);
+    attemptScheduledRecovery();
+  }
+  
+  
+  private void attemptScheduledRecovery()
+  {
+    if (status != Status.RECOVERY)
+      return;
+    
+    JobDagAllocation correctAllocation = new JobDagAllocation(allocation);
+    
+    try {
+      attemptRecovery();
+    } catch (RecoveryFailureException e) {
+      DisposeLog.error(this, "recovery failed: ", e.getMessage());
+      if (e.getCause() != null)
+        DisposeLog.error(this, "(exception cause: ", e.getCause(), ")");
+      
+      if (e.isFatal()) {
+        DisposeLog.error(this, "job is unsalvageable; we have to kill it");
+        kill();
+        return;
+      }
+      
+      allocation = correctAllocation;
+      
+      DisposeLog.critical(this, "scheduling a new recovery attempt in ", Config.recoveryRetryPeriod / 1000, " s");
+      try {
+        supervis.executeJobFunctionAfterDelay(id, (Job self) -> {
+          attemptScheduledRecovery();
+          return null;
+        }, Config.recoveryRetryPeriod);
+      } catch (DeadJobException e1) { }
+    }
+  }
 
+
+  private void attemptRecovery() throws RecoveryFailureException
+  {
+    recoveryAttemptCounter++;
+    DisposeLog.critical(this, "recovery attempt #", recoveryAttemptCounter);
+    
+    int sourceId = jobDag.getSourceNodeId();
+    Set<Integer> otherNodes = allocation.getLiveLogicalNodes(false, true);
+    
     DisposeLog.critical(this, "suspending live nodes");
     try {
-      sendCommandToLogicalNodes(Collections.singleton(srcid), ThreadCommandMsg.Command.SUSPEND, false, true);
+      sendCommandToLogicalNodes(Collections.singleton(sourceId), ThreadCommandMsg.Command.SUSPEND, false, true);
     } catch (LinkBrokenException e) {
-      DisposeLog.error(this, "cannot suspend source; exc = ", e);
-      return;
+      throw new RecoveryFailureException("cannot suspend source", e);
     }
     try {
       sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.SUSPEND, false, false);
     } catch (LinkBrokenException e) {
-      DisposeLog.error(this, "cannot suspend live nodes; exc = ", e);
-      return;
+      throw new RecoveryFailureException("cannot suspend live nodes", e);
     }
     
     DisposeLog.critical(this, "waiting 5 seconds to let the links flush themselves");
     try {
       TimeUnit.SECONDS.sleep(5);
     } catch (InterruptedException e) { }
-    
-    attemptRecovery();
-  }
-
-
-  private void attemptRecovery()
-  {
-    DisposeLog.critical(this, "attempting a recover");
 
     UUID ckp = checkpoints.getLatestCompleteCheckpointId(jobDag);
     if (ckp == null) {
-      DisposeLog.error(this, "no eligible checkpoint found");
-      return;
+      throw new RecoveryFailureException("no eligible checkpoint found", null, true);
     }
     DisposeLog.critical(this, "will use checkpoint ", ckp);
 
@@ -297,15 +330,14 @@ public class Job implements LogInfo
     try {
       allocation.allocateMissingNodes(supervis.getNodes(), owner);
     } catch (ResourceUnderrunException e) {
-      DisposeLog.critical(this, "recover failure; not enough nodes left");
-      return;
+      throw new RecoveryFailureException("not enough nodes left", e, true);
     }
+    DisposeLog.critical(this, "new allocation = ", allocation);
 
     try {
       restoreStateFromCheckpoint(jobDag.getNodes(), ckp);
     } catch (LinkBrokenException e1) {
-      DisposeLog.error("could not restore checkpoint", ckp, "; exc = ", e1);
-      return;
+      throw new RecoveryFailureException("could not restore checkpoint" + ckp.toString(), e1);
     }
 
     Set<LinkDescription> newLocalLinks = new HashSet<>(allocation.localLinks());
@@ -318,22 +350,21 @@ public class Job implements LogInfo
       materializeLocalLinks(newLocalLinks);
       materializeRemoteLinks(newRemoteLinks);
     } catch (LinkBrokenException e) {
-      DisposeLog.critical(this, "could not restore links; exc = ", e);
-      return;
+      throw new RecoveryFailureException("could not restore links", e);
     }
 
     DisposeLog.critical(this, "resuming processing");
+    otherNodes = allocation.getLiveLogicalNodes(false, true);
     try {
-      Set<Integer> otherNodes = allocation.getLiveLogicalNodes(false, true);
-      int sourceId = jobDag.getSourceNodeId();
       sendCommandToLogicalNodes(otherNodes, ThreadCommandMsg.Command.RESUME, false, true);
       sendCommandToLogicalNodes(Collections.singleton(sourceId), ThreadCommandMsg.Command.RESUME, false, true);
       status = Status.RUN;
     } catch (LinkBrokenException e) {
-      DisposeLog.critical(this, "could not restart job after restore; exc = ", e);
+      throw new RecoveryFailureException("could not restart job after restore", e);
     }
 
-    DisposeLog.critical(this, "recovery completed");
+    DisposeLog.critical(this, "recovery succeeded");
+    recoveryAttemptCounter = 0;
   }
 
 

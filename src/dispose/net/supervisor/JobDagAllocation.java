@@ -25,6 +25,15 @@ public class JobDagAllocation
   private Set<LinkDescription> liveLinks = new HashSet<>();
   
   
+  public JobDagAllocation(JobDagAllocation toCopy)
+  {
+    this.jobDag = toCopy.jobDag;
+    this.logNodeToPhysNode = new HashMap<>(toCopy.logNodeToPhysNode);
+    this.liveLogNodes = new HashSet<>(toCopy.liveLogNodes);
+    this.liveLinks = new HashSet<>(toCopy.liveLinks);
+  }
+  
+  
   public JobDagAllocation(JobDag jobDag)
   {
     this.jobDag = jobDag;

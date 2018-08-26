@@ -11,6 +11,10 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import dispose.log.DisposeLog;
@@ -21,7 +25,7 @@ public class Supervisor implements Runnable
 {
   private Set<NodeProxy> nodes = new HashSet<>();
   private Map<UUID, Job> currentJobs = new HashMap<>();
-  private Map<UUID, ExecutorService> jobSerialQueues = new HashMap<>(); 
+  private Map<UUID, ScheduledExecutorService> jobSerialQueues = new HashMap<>(); 
   private Timer checkpointTimer;
 
   
@@ -72,7 +76,15 @@ public class Supervisor implements Runnable
   {
     DisposeLog.info(this, "created job ", j.getID());
     currentJobs.put(j.getID(), j);
-    jobSerialQueues.put(j.getID(), Executors.newSingleThreadExecutor());
+    jobSerialQueues.put(j.getID(), Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable r)
+      {
+        Thread thd = new Thread(r);
+        thd.setName("job-" + j.getID().toString());
+        return thd;
+      }
+    }));
   }
   
   
@@ -85,15 +97,26 @@ public class Supervisor implements Runnable
   }
   
   
-  synchronized public <T> Future<T> executeJobFunction(UUID jobid, Function<Job, T> qexc) throws DeadJobException
+  synchronized public <T> Future<T> executeJobFunction(
+    UUID jobid, 
+    Function<Job, T> qexc) throws DeadJobException
+  {
+    return executeJobFunctionAfterDelay(jobid, qexc, 0);
+  }
+  
+  
+  synchronized public <T> ScheduledFuture<T> executeJobFunctionAfterDelay(
+    UUID jobid, 
+    Function<Job, T> qexc, 
+    long delayms) throws DeadJobException
   {
     Job j = currentJobs.get(jobid);
-    ExecutorService q = jobSerialQueues.get(jobid);
+    ScheduledExecutorService q = jobSerialQueues.get(jobid);
     if (j == null || q == null)
       throw new DeadJobException();
-    return q.submit(() -> {
+    return q.schedule(() -> {
       return qexc.apply(j);
-    });
+    }, delayms, TimeUnit.MILLISECONDS);
   }
   
   
