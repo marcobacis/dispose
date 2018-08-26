@@ -41,8 +41,8 @@ public class JoinOperatorTest
     List<DataAtom> result = new LinkedList<>();
     
     for(int i = 0; i < totSize; i++) {
-      DataAtom leftAtom = i >= left.size() ? new NullData() : left.get(i);
-      DataAtom rightAtom = i >= right.size() ? new NullData() : right.get(i);
+      DataAtom leftAtom = i >= left.size() ? new NullData(-1) : left.get(i);
+      DataAtom rightAtom = i >= right.size() ? new NullData(-1) : right.get(i);
       
       result.addAll(joinOp.processAtom(leftAtom, rightAtom));
     }
@@ -60,9 +60,9 @@ public class JoinOperatorTest
     
     for(Double val : atoms) {
       if(val == 0)
-        result.add(new NullData());
+        result.add(new NullData(-1));
       else
-        result.add(new FloatData(val));
+        result.add(new FloatData(-1, val));
     }
     
     return result;

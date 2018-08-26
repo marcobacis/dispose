@@ -10,7 +10,6 @@ import dispose.net.common.types.FloatData;
 
 public class AvgWindowOperator extends WindowOperator
 {
-  
   private static final long serialVersionUID = 192613059444264258L;
 
 
@@ -28,7 +27,7 @@ public class AvgWindowOperator extends WindowOperator
       sum += ((FloatData) atom).floatValue();
     }
     
-    return Collections.singletonList(new FloatData(sum / this.windows.get(0).size()));
+    return Collections.singletonList(new FloatData(this.clock(), sum / this.windows.get(0).size()));
   }
 
 

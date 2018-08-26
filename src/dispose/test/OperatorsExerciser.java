@@ -52,7 +52,7 @@ public class OperatorsExerciser
     avgWrapper.start();
     
     for (int i = 0; i < 15; i++) {
-      to.sendMsg(new FloatData(i));
+      to.sendMsg(new FloatData(-1, i));
     }
 
     for (int i=0; i<6; i++) {
@@ -86,7 +86,7 @@ public class OperatorsExerciser
     avgWrapper.resume();
     
     for (int i = 0; i < 15; i++) {
-      to.sendMsg(new FloatData(i));
+      to.sendMsg(new FloatData(-1, i));
     }
 
     for (int i=0; i<6; i++) {

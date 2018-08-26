@@ -52,7 +52,7 @@ public class WindowOperatorTest
     List<DataAtom> atoms = new ArrayList<>();
 
     for (int i = 0; i < size; i++) {
-      atoms.add(new FloatData(Math.random()));
+      atoms.add(new FloatData(-1, Math.random()));
     }
 
     return atoms;
@@ -61,7 +61,6 @@ public class WindowOperatorTest
 
   private void checkResultWithParams(int size, int slide, int length)
   {
-
     List<DataAtom> atoms = createAtomList(length);
 
     List<DataAtom> result = new ArrayList<>();
@@ -86,7 +85,7 @@ public class WindowOperatorTest
           double val = ((FloatData) atoms.get(w + i)).floatValue();
           max = val > max ? val : max;
         }
-        trusted.add(new FloatData(max));
+        trusted.add(new FloatData(-1, max));
       }
     }
     

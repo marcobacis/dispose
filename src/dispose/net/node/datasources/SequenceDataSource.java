@@ -9,7 +9,6 @@ import dispose.net.common.types.FloatData;
 
 public class SequenceDataSource extends AbstractDataSource
 {
-
   private static final long serialVersionUID = 9034901424600021031L;
   private int end;
   private int count;
@@ -34,9 +33,9 @@ public class SequenceDataSource extends AbstractDataSource
   public DataAtom getNextAtom()
   {
     if (end != 0 && count >= end)
-      return new EndData();
+      return new EndData(this.clock());
 
-    DataAtom newAtom = new FloatData(count);
+    DataAtom newAtom = new FloatData(this.clock(), count);
 
     count++;
     return newAtom;

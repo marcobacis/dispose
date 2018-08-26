@@ -50,8 +50,9 @@ public class JoinOperator extends WindowOperator
     return result;
   }
 
-  protected List<DataAtom> join(List<DataAtom> left, List<DataAtom> right) {
-    
+  
+  protected List<DataAtom> join(List<DataAtom> left, List<DataAtom> right)
+  {  
     List<DataAtom> result = new LinkedList<>();
     
     for(DataAtom leftAtom : left) {
@@ -65,21 +66,22 @@ public class JoinOperator extends WindowOperator
     return result;
   }
 
+  
   protected DataAtom join(DataAtom left, DataAtom right)
   {
-
     if(left == null || right == null)
-      return new NullData();
+      return new NullData(this.clock());
     
     if (left.getClass() != right.getClass())
-      return new NullData();
+      return new NullData(this.clock());
 
     if (left instanceof FloatData) {
-      if (((FloatData) left).floatValue() == ((FloatData) right).floatValue())
-        return left;
+      double v = ((FloatData) left).floatValue();
+      if (v == ((FloatData) right).floatValue())
+        return new FloatData(this.clock(), v);
     }
 
-    return new NullData();
+    return new NullData(this.clock());
   }
 
 

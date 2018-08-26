@@ -19,19 +19,19 @@ public class WindowTest
   {
     Window win = new Window(5, 1);
     assertFalse(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isFull());
-    win.push(new NullData());
+    win.push(new NullData(-1));
     assertFalse(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertTrue(win.isFull());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertTrue(win.isFull());
   }
 
@@ -41,16 +41,16 @@ public class WindowTest
     Window win = new Window(5, 1);
     assert(win.isEmpty());
     
-    win.push(new NullData());
+    win.push(new NullData(-1));
     assert(win.isEmpty());
     
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isEmpty());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isEmpty());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isEmpty());
-    win.push(new FloatData(0));
+    win.push(new FloatData(-1, 0));
     assertFalse(win.isEmpty());
     
     win.reset();
@@ -64,7 +64,7 @@ public class WindowTest
     assertTrue(win.isEmpty());
     
     for (int i = 0; i < 6; i++) {
-      win.push(new FloatData(Math.random()));
+      win.push(new FloatData(-1, Math.random()));
     }
     
     assertTrue(win.isFull());
@@ -94,7 +94,7 @@ public class WindowTest
     List<DataAtom> atoms = new ArrayList<>(length);
     
     for (int i = 0; i < length; i++) {
-      atoms.add(new FloatData(Math.random()));
+      atoms.add(new FloatData(-1, Math.random()));
     }
 
     List<List<DataAtom>> result = new ArrayList<>();
@@ -106,7 +106,7 @@ public class WindowTest
       win.push(a);
       
       if (nulls && (Math.random()*100 < 20))
-        win.push(new NullData());
+        win.push(new NullData(-1));
       
       if(win.ready()) {
         win.move();

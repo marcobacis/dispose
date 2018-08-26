@@ -22,9 +22,9 @@ public class IncrementOperator extends NullOperator
   @Override
   public List<DataAtom> processAtom(DataAtom... input)
   {
-    FloatData fdata = (FloatData) input[0];
+    FloatData data = (FloatData) input[0];
     
-    DataAtom[] outData = { new FloatData(fdata.floatValue() + 1.0) };
+    DataAtom[] outData = { new FloatData(this.clock(), data.floatValue() + 1.0) };
     
     return super.processAtom(outData);
   }

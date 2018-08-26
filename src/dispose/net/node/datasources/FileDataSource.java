@@ -42,14 +42,14 @@ public class FileDataSource extends AbstractDataSource
       line = inStream.readLine();
 
       if (line != null)
-        return new FloatData(Double.parseDouble(line));
+        return new FloatData(this.clock(), Double.parseDouble(line));
 
       this.end();
-      return new EndData();
+      return new EndData(this.clock());
 
     } catch (IOException e) {
       // TODO send error to supervisor or just end computation?
-      return new EndData();
+      return new EndData(this.clock());
     }
   }
 

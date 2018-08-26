@@ -22,11 +22,10 @@ public class RandomFloatDataSrc extends AbstractDataSource
   @Override
   public DataAtom getNextAtom()
   {
-
     if (rng == null)
       rng = new Random();
 
-    return new FloatData(rng.nextInt(2));
+    return new FloatData(this.clock(), rng.nextInt(2));
   }
 
 

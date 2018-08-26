@@ -9,8 +9,13 @@ import dispose.net.message.Message;
 public abstract class DataAtom extends Message
 {
   private static final long serialVersionUID = -7832345233584092879L;
-  private long timestamp = last_timestamp++;
-  private static long last_timestamp = 0;
+  private long timestamp;
+  
+  
+  public DataAtom(long timestamp)
+  {
+    this.timestamp = timestamp;
+  }
   
   
   public long getTimestamp()

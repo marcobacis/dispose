@@ -27,7 +27,7 @@ public class SumWindowOperator extends WindowOperator
       sum += ((FloatData) atom).floatValue();
     }
     
-    return Collections.singletonList(new FloatData(sum));
+    return Collections.singletonList(new FloatData(this.clock(), sum));
   }
 
 

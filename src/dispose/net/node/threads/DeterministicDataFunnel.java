@@ -19,7 +19,6 @@ import dispose.net.node.checkpoint.OperatorCheckpoint;
 public class DeterministicDataFunnel implements Serializable
 {
   private static final long serialVersionUID = 5354298488928186074L;
-  private int numInputs;
   private List<ConcurrentLinkedQueue<DataAtom>> inputQueues;
   private DataAtom[] inputAtoms;
   private Boolean[] readyAtoms;
@@ -29,7 +28,6 @@ public class DeterministicDataFunnel implements Serializable
   
   public DeterministicDataFunnel(int numInputs)
   {
-    this.numInputs = numInputs;
     inputQueues = new ArrayList<>(numInputs);
     for (int d = 0; d < numInputs; d++) {
       inputQueues.add(new ConcurrentLinkedQueue<>());
@@ -40,7 +38,7 @@ public class DeterministicDataFunnel implements Serializable
     endAtoms = new Boolean[numInputs];
 
     for (int d = 0; d < numInputs; d++) {
-      inputAtoms[d] = new NullData();
+      inputAtoms[d] = new NullData(-1);
       readyAtoms[d] = false;
       endAtoms[d] = false;
     }
@@ -77,7 +75,7 @@ public class DeterministicDataFunnel implements Serializable
           if (inAtom instanceof FloatData) {
             inputAtoms[i] = inAtom;
           } else if (inAtom instanceof EndData) {
-            inputAtoms[i] = new NullData();
+            inputAtoms[i] = new NullData(-1);
             endAtoms[i] = true;
           }
           readyAtoms[i] = true;
@@ -144,7 +142,7 @@ public class DeterministicDataFunnel implements Serializable
     for (int j = 0; j < inputAtoms.length; j++) {
       if (!endAtoms[j]) {
         readyAtoms[j] = false;
-        inputAtoms[j] = new NullData();
+        inputAtoms[j] = new NullData(-1);
       }
     }
   }

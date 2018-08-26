@@ -79,8 +79,6 @@ public abstract class WindowOperator implements Operator, Serializable
   @Override
   public synchronized List<DataAtom> processAtom(DataAtom... input)
   {
-    this.clock++;
-
     assert(input.length == this.windows.size());
 
     boolean ready = false;
@@ -96,9 +94,10 @@ public abstract class WindowOperator implements Operator, Serializable
 
     // apply operation on the windows
 
-    if(ready){
-      
-      List<DataAtom> result = applyOpToWindows();
+    List<DataAtom> result;
+    
+    if (ready) {
+      result = applyOpToWindows();
       
       //reset new elements for ready windows
       for(int w = 0; w < inputs; w++) {
@@ -107,11 +106,12 @@ public abstract class WindowOperator implements Operator, Serializable
           this.windows.get(w).move();
         }
       }
-      
-      return result;
+    } else {
+      result = new ArrayList<>();
     }
 
-    return new ArrayList<>();
+    clock++;
+    return result;
   }
 
   /**

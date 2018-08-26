@@ -308,7 +308,7 @@ public class OperatorThread extends ComputeThread implements LogInfo
 
         if (barrier.stopCondition()) {
           DisposeLog.debug(this, "Operator ", getID(), " received EndData");
-          outLink.sendMsg(new EndData());
+          outLink.sendMsg(new EndData(operator.clock()));
           pause();
 
         } else if (barrier.processCondition()) {

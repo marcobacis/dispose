@@ -31,7 +31,7 @@ public class MaxWindowOperator extends WindowOperator
       max = val > max ? val : max;
     }
     
-    return Collections.singletonList(new FloatData(max));
+    return Collections.singletonList(new FloatData(this.clock(), max));
   }
 
 

@@ -33,7 +33,7 @@ public class MinWindowOperator extends WindowOperator
       min = val < min ? val : min;
     }
     
-    return Collections.singletonList(new FloatData(min));
+    return Collections.singletonList(new FloatData(this.clock(), min));
   }
 
 
