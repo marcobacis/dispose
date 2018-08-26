@@ -156,6 +156,9 @@ public class MonitoredLink
   
   public synchronized void sendMsgAndRequestAck(Message message, AckType type) throws LinkBrokenException
   {
+    if (ackStatus == null)
+      throw new LinkBrokenException("closed link");
+    
     AckRequestMsg ackmsg = new AckRequestMsg(message, type);
     ackStatus.put(message.getUUID(), false);
     link.sendMsg(ackmsg);
