@@ -15,7 +15,7 @@ public class FileDataSource extends AbstractDataSource
   private static final long serialVersionUID = -7965858251778817607L;
 
   private String path;
-  private BufferedReader inStream;
+  private transient BufferedReader inStream;
 
   private int lastLine = 0;
 
@@ -40,6 +40,7 @@ public class FileDataSource extends AbstractDataSource
 
     try {
       line = inStream.readLine();
+      lastLine++;
 
       if (line != null)
         return new FloatData(this.clock(), Double.parseDouble(line));
@@ -68,10 +69,12 @@ public class FileDataSource extends AbstractDataSource
   @Override
   public void end()
   {
-    try {
-      inStream.close();
-    } catch (IOException e) {
-      // do nothing
+    if(inStream != null) {
+      try {
+        inStream.close();
+      } catch (IOException e) {
+        return;
+      }
     }
   }
 
