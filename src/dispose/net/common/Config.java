@@ -1,5 +1,8 @@
 package dispose.net.common;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Config
 {
   public static final int nodeCtrlPort = 8000;
@@ -11,4 +14,6 @@ public class Config
   public static final int checkpointPeriod = 10000;
   
   public static final int recoveryRetryPeriod = 5000;
+  
+  public static final Path checkpointDataRoot = Paths.get(System.getProperty("user.home"), ".dispose");
 }
